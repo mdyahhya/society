@@ -90,7 +90,7 @@ export function buildUpiUrl(params: {
 }): string {
   const pa = encodeURIComponent(params.upiId.trim());
   const pn = encodeURIComponent(params.payeeName.trim());
-  const tn = encodeURIComponent(params.note || 'Society Contribution');
+  const tn = encodeURIComponent(params.note || 'Society Share');
   let url = `upi://pay?pa=${pa}&pn=${pn}&cu=INR&tn=${tn}`;
   if (params.amount && params.amount > 0) {
     url += `&am=${params.amount}`;

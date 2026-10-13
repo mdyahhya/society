@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Building2,
   ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { getCurrentPeriod, getMonthName } from '../../utils/formatters';
@@ -17,7 +18,7 @@ import { getCurrentPeriod, getMonthName } from '../../utils/formatters';
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
     activeTab,
-    setActiveTab,
+    navigateToTab,
     openCreateModal,
     openQrModal,
     society,
@@ -45,7 +46,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 bg-slate-50/50 p-4 shrink-0 min-h-screen sticky top-0 justify-between">
         <div className="space-y-6">
           {/* Brand & Society Name */}
-          <div className="flex items-center gap-3 px-2 py-1">
+          <div
+            onClick={() => navigateToTab('home')}
+            className="flex items-center gap-3 px-2 py-1 cursor-pointer hover:opacity-90 transition-opacity"
+          >
             <div className="w-10 h-10 rounded-2xl bg-forest-800 text-white flex items-center justify-center shadow-sm">
               <ShieldCheck size={22} />
             </div>
@@ -80,7 +84,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => setActiveTab(item.key as any)}
+                    onClick={() => navigateToTab(item.key as any)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                       isActive
                         ? 'bg-forest-800 text-white shadow-sm'
@@ -119,11 +123,24 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Left: Mobile Title / Active Screen Title */}
-          <div className="flex items-center gap-2.5">
-            <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center">
-              <ShieldCheck size={18} />
-            </div>
+          {/* Left: Mobile Title / Active Screen Title + Back Button */}
+          <div className="flex items-center gap-2">
+            {activeTab !== 'home' ? (
+              <button
+                type="button"
+                onClick={() => navigateToTab('home')}
+                className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center gap-1"
+                aria-label="Back to Home"
+                title="Back to Home"
+              >
+                <ArrowLeft size={18} />
+                <span className="text-xs font-semibold hidden sm:inline">Home</span>
+              </button>
+            ) : (
+              <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center">
+                <ShieldCheck size={18} />
+              </div>
+            )}
             <div>
               <span className="text-[10px] font-bold text-forest-800 uppercase tracking-wider block leading-none">
                 {society.name}
@@ -214,7 +231,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <button
               key={item.key}
               type="button"
-              onClick={() => setActiveTab(item.key as any)}
+              onClick={() => navigateToTab(item.key as any)}
               className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition-colors ${
                 isActive ? 'text-forest-800 font-bold' : 'text-slate-400 hover:text-slate-600'
               }`}

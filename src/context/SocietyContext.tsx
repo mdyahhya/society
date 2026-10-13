@@ -60,8 +60,12 @@ interface SocietyContextType {
   openQrModal: (amount?: number, note?: string) => void;
   whatsAppModalOpen: boolean;
   setWhatsAppModalOpen: (open: boolean) => void;
-  whatsAppPayload: WhatsAppMessagePayload | null;
-  openWhatsAppModal: (payload: WhatsAppMessagePayload) => void;
+  isAddMemberModalOpen: boolean;
+  setIsAddMemberModalOpen: (open: boolean) => void;
+  openAddMemberModal: () => void;
+  closeAllModals: () => void;
+  navigateToTab: (tab: 'home' | 'members' | 'loans' | 'manage') => void;
+  openMemberDetail: (member: Member | null) => void;
 }
 
 const SocietyContext = createContext<SocietyContextType | undefined>(undefined);
@@ -75,6 +79,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createModalDefaultType, setCreateModalDefaultType] = useState<'contribution' | 'loan' | 'repayment' | 'reminder' | null>(null);
   const [selectedMemberForDetail, setSelectedMemberForDetail] = useState<Member | null>(null);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [qrModalAmount, setQrModalAmount] = useState<number | undefined>(undefined);
   const [qrModalNote, setQrModalNote] = useState<string | undefined>(undefined);
@@ -91,21 +96,115 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageService.saveData(updated);
   };
 
+  const closeAllModals = () => {
+    setCreateModalOpen(false);
+    setSelectedMemberForDetail(null);
+    setIsAddMemberModalOpen(false);
+    setQrModalOpen(false);
+    setWhatsAppModalOpen(false);
+  };
+
+  const navigateToTab = (targetTab: 'home' | 'members' | 'loans' | 'manage') => {
+    closeAllModals();
+    if (targetTab === activeTab) return;
+
+    if (typeof window !== 'undefined') {
+      if (targetTab === 'home') {
+        window.history.replaceState({ screen: 'home' }, '', '');
+      } else {
+        if (activeTab === 'home') {
+          window.history.pushState({ screen: targetTab }, '', '');
+        } else {
+          // Replace state so jumping between secondary tabs doesn't chain history
+          window.history.replaceState({ screen: targetTab }, '', '');
+        }
+      }
+    }
+    setActiveTab(targetTab);
+  };
+
   const openCreateModal = (type: 'contribution' | 'loan' | 'repayment' | 'reminder' = 'contribution') => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ modal: 'create', screen: activeTab }, '', '');
+    }
     setCreateModalDefaultType(type);
     setCreateModalOpen(true);
   };
 
   const openQrModal = (amount?: number, note?: string) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ modal: 'qr', screen: activeTab }, '', '');
+    }
     setQrModalAmount(amount);
     setQrModalNote(note);
     setQrModalOpen(true);
   };
 
   const openWhatsAppModal = (payload: WhatsAppMessagePayload) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ modal: 'whatsapp', screen: activeTab }, '', '');
+    }
     setWhatsAppPayload(payload);
     setWhatsAppModalOpen(true);
   };
+
+  const openAddMemberModal = () => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ modal: 'add-member', screen: activeTab }, '', '');
+    }
+    setIsAddMemberModalOpen(true);
+  };
+
+  const openMemberDetail = (member: Member | null) => {
+    if (member && typeof window !== 'undefined') {
+      window.history.pushState({ modal: 'member-detail', screen: activeTab }, '', '');
+    }
+    setSelectedMemberForDetail(member);
+  };
+
+  // Hardware Back Button & Browser History Handler
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Establish root state on load
+    if (!window.history.state || !window.history.state.screen) {
+      window.history.replaceState({ screen: 'home' }, '', '');
+    }
+
+    const handlePopState = () => {
+      // 1. If any modal is open: close it and show Home
+      const isAnyModalOpen =
+        createModalOpen ||
+        qrModalOpen ||
+        whatsAppModalOpen ||
+        Boolean(selectedMemberForDetail) ||
+        isAddMemberModalOpen;
+
+      if (isAnyModalOpen) {
+        closeAllModals();
+        setActiveTab('home');
+        window.history.replaceState({ screen: 'home' }, '', '');
+        return;
+      }
+
+      // 2. If on any non-home tab: go to Home immediately
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        window.history.replaceState({ screen: 'home' }, '', '');
+        return;
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [
+    activeTab,
+    createModalOpen,
+    qrModalOpen,
+    whatsAppModalOpen,
+    selectedMemberForDetail,
+    isAddMemberModalOpen,
+  ]);
 
   // Helper getters
   const isMemberPaidInPeriod = (memberId: string, year: number, month: number): boolean => {
@@ -540,6 +639,12 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setWhatsAppModalOpen,
         whatsAppPayload,
         openWhatsAppModal,
+        isAddMemberModalOpen,
+        setIsAddMemberModalOpen,
+        openAddMemberModal,
+        closeAllModals,
+        navigateToTab,
+        openMemberDetail,
       }}
     >
       {children}

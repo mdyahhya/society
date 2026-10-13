@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { formatINR, getMonthName } from '../../utils/formatters';
+import { formatINR, getMonthName, buildUpiUrl } from '../../utils/formatters';
+import { QRCodeSVG } from 'qrcode.react';
 
 export const ManageView: React.FC = () => {
   const {
@@ -39,7 +40,7 @@ export const ManageView: React.FC = () => {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
 
-  const isConnectedToSupabase = isSupabaseConfigured();
+  const isCloudSyncActive = isSupabaseConfigured();
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,8 +167,34 @@ export const ManageView: React.FC = () => {
                 />
               </div>
               <span className="text-[11px] text-slate-400 mt-0.5 block">
-                All QR codes & WhatsApp payment links use this exact VPA.
+                All QR codes & WhatsApp payment links generate dynamically for this exact VPA.
               </span>
+              {upiId.trim() && (
+                <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+                  <div className="p-1 bg-white rounded-xl border border-slate-200 shrink-0 shadow-2xs">
+                    <QRCodeSVG
+                      value={buildUpiUrl({
+                        upiId: upiId.trim(),
+                        payeeName: societyName.trim() || 'Society',
+                        note: 'Monthly Share / Qarz-e-Hasan',
+                      })}
+                      size={60}
+                      level="M"
+                    />
+                  </div>
+                  <div className="overflow-hidden text-left">
+                    <span className="inline-block text-[10px] font-bold text-forest-800 uppercase tracking-wide bg-forest-100/70 px-1.5 py-0.5 rounded-md">
+                      Live Verified QR
+                    </span>
+                    <p className="text-xs font-medium text-slate-700 mt-0.5 truncate">
+                      Encodes: <span className="font-mono font-semibold">{upiId.trim()}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      Matches the UPI ID typed above in real time
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -299,7 +326,7 @@ export const ManageView: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Backend Database & Storage Status */}
+      {/* 4. Data Backup & Storage Status */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
@@ -307,30 +334,30 @@ export const ManageView: React.FC = () => {
               <Database size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Database & Cloud Sync</h3>
-              <p className="text-xs text-slate-500">Supabase Postgres backend status</p>
+              <h3 className="text-sm font-bold text-slate-900">Data Backup & Storage</h3>
+              <p className="text-xs text-slate-500">System data retention and synchronization status</p>
             </div>
           </div>
 
           <span
             className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-              isConnectedToSupabase
+              isCloudSyncActive
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                 : 'bg-slate-100 text-slate-700 border-slate-200'
             }`}
           >
-            {isConnectedToSupabase ? 'Supabase Connected' : 'Local Storage Mode'}
+            {isCloudSyncActive ? 'Cloud Sync Active' : 'Device Storage Mode'}
           </span>
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed">
-          {isConnectedToSupabase
-            ? 'Your application is connected to live Supabase Postgres with active Row Level Security.'
-            : 'Running in resilient offline local browser storage mode. To sync with Supabase, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'}
+          {isCloudSyncActive
+            ? 'Automatic cloud synchronization is active. All member profiles, shares, and loans are securely backed up.'
+            : 'Running in high-speed offline device storage mode with instant auto-save. All records are safely preserved in this browser and ready for export.'}
         </p>
 
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-xs text-slate-500">Testing data reset</span>
+          <span className="text-xs text-slate-500">Sample testing data</span>
           <button
             type="button"
             onClick={() => {

@@ -171,7 +171,7 @@ export const CreateActionModal: React.FC = () => {
       isOpen={createModalOpen}
       onClose={() => setCreateModalOpen(false)}
       title="Society Quick Action"
-      subtitle="Record contributions, disburse loans, or log repayments"
+      subtitle="Record shares, disburse loans, or log repayments"
       maxWidth="md"
     >
       <div>
@@ -187,7 +187,7 @@ export const CreateActionModal: React.FC = () => {
             }`}
           >
             <CreditCard size={16} />
-            <span className="truncate">Monthly</span>
+            <span className="truncate">Add Share</span>
           </button>
           <button
             type="button"

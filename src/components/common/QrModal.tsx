@@ -25,7 +25,7 @@ export const QrModal: React.FC = () => {
     upiId: society.upi_id,
     payeeName: society.name,
     amount: amtNum,
-    note: qrModalNote || 'Monthly Contribution / Qarz-e-Hasan',
+    note: qrModalNote || 'Monthly Share / Qarz-e-Hasan',
   });
 
   const handleCopyUpi = () => {

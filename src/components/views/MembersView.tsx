@@ -42,11 +42,14 @@ export const MembersView: React.FC = () => {
     society,
     selectedMemberForDetail,
     setSelectedMemberForDetail,
+    isAddMemberModalOpen,
+    setIsAddMemberModalOpen,
+    openAddMemberModal,
+    openMemberDetail,
   } = useSociety();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'paid' | 'unpaid' | 'loan'>('all');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   // Form states
@@ -86,7 +89,7 @@ export const MembersView: React.FC = () => {
     setFormJoinDate(new Date().toISOString().split('T')[0]);
     setFormAddress('');
     setFormNotes('');
-    setIsAddModalOpen(true);
+    openAddMemberModal();
   };
 
   const handleOpenEdit = (m: Member) => {
@@ -98,7 +101,7 @@ export const MembersView: React.FC = () => {
     setFormJoinDate(m.join_date);
     setFormAddress(m.address || '');
     setFormNotes(m.notes || '');
-    setIsAddModalOpen(true);
+    openAddMemberModal();
   };
 
   const handleSaveMember = async (e: React.FormEvent) => {
@@ -128,7 +131,7 @@ export const MembersView: React.FC = () => {
       });
     }
 
-    setIsAddModalOpen(false);
+    setIsAddMemberModalOpen(false);
   };
 
   const handleDeleteMember = async (id: string, name: string) => {
@@ -213,7 +216,7 @@ export const MembersView: React.FC = () => {
               >
                 <div
                   className="cursor-pointer flex-1"
-                  onClick={() => setSelectedMemberForDetail(member)}
+                  onClick={() => openMemberDetail(member)}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono">
@@ -291,7 +294,7 @@ export const MembersView: React.FC = () => {
                   {/* View Details Chevron */}
                   <button
                     type="button"
-                    onClick={() => setSelectedMemberForDetail(member)}
+                    onClick={() => openMemberDetail(member)}
                     className="p-2 rounded-xl text-slate-400 hover:text-slate-800 transition-colors"
                     aria-label="View member ledger"
                   >
@@ -306,8 +309,8 @@ export const MembersView: React.FC = () => {
 
       {/* Add / Edit Member Modal */}
       <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        isOpen={isAddMemberModalOpen}
+        onClose={() => setIsAddMemberModalOpen(false)}
         title={editingMember ? 'Edit Member Profile' : 'Add New Member'}
         subtitle="Community member record for monthly shares"
         maxWidth="md"
@@ -414,7 +417,7 @@ export const MembersView: React.FC = () => {
           <div className="flex gap-2 pt-2">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => setIsAddMemberModalOpen(false)}
               className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold"
             >
               Cancel
