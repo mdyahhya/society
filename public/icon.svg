@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#166534"/>
+  <!-- Geometric Crescent & Solidarity Arch in Gold/White -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#ffffff" stroke-width="20" stroke-opacity="0.2"/>
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#ffffff" stroke-width="24"/>
+  <!-- Trust Pillar / Scale Balance Motif -->
+  <path d="M256 160 V352 M176 220 H336 M176 220 L150 280 H202 Z M336 220 L310 280 H362 Z" 
+        fill="#ffffff" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="352" r="14" fill="#ffffff"/>
+</svg>
