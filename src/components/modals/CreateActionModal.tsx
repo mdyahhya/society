@@ -568,9 +568,12 @@ export const CreateActionModal: React.FC = () => {
                       onClick={() => {
                         setCreateModalOpen(false);
                         openWhatsAppModal({
+                          memberId: m.id,
                           memberName: m.name,
+                          memberPhone: m.phone,
                           societyName: society.name,
                           monthName: getMonthName(getCurrentPeriod().month),
+                          monthNumber: getCurrentPeriod().month,
                           monthlyShareDue: m.monthly_share,
                           loanDue: loanDue > 0 ? loanDue : undefined,
                           totalDue,

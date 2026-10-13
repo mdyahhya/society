@@ -264,9 +264,12 @@ export const MembersView: React.FC = () => {
                       const loanDue = activeLoan ? Math.min(activeLoan.monthly_installment, activeLoan.remaining_balance) : 0;
                       const shareDue = isPaid ? 0 : member.monthly_share;
                       openWhatsAppModal({
+                        memberId: member.id,
                         memberName: member.name,
+                        memberPhone: member.phone,
                         societyName: society.name,
                         monthName: selectedPeriod.monthName,
+                        monthNumber: selectedPeriod.month,
                         monthlyShareDue: shareDue > 0 ? shareDue : undefined,
                         loanDue: loanDue > 0 ? loanDue : undefined,
                         totalDue: shareDue + loanDue,
@@ -557,9 +560,12 @@ export const MembersView: React.FC = () => {
                         const m = selectedMemberForDetail;
                         setSelectedMemberForDetail(null);
                         openWhatsAppModal({
+                          memberId: m.id,
                           memberName: m.name,
+                          memberPhone: m.phone,
                           societyName: society.name,
                           monthName: selectedPeriod.monthName,
+                          monthNumber: selectedPeriod.month,
                           monthlyShareDue: m.monthly_share,
                           totalDue: m.monthly_share,
                           upiId: society.upi_id,

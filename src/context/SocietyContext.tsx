@@ -10,7 +10,7 @@ import {
   MonthMetrics,
 } from '../types';
 import { storageService, AppStoreData } from '../services/storage';
-import { getCurrentPeriod, getMonthName, WhatsAppMessagePayload } from '../utils/formatters';
+import { getCurrentPeriod, getMonthName, WhatsAppMessagePayload, ReminderLanguage } from '../utils/formatters';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface SocietyContextType {
@@ -66,6 +66,8 @@ interface SocietyContextType {
   closeAllModals: () => void;
   navigateToTab: (tab: 'home' | 'members' | 'loans' | 'manage') => void;
   openMemberDetail: (member: Member | null) => void;
+  defaultReminderLang: ReminderLanguage;
+  setDefaultReminderLang: (lang: ReminderLanguage) => void;
 }
 
 const SocietyContext = createContext<SocietyContextType | undefined>(undefined);
@@ -74,6 +76,29 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [data, setData] = useState<AppStoreData | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(getCurrentPeriod());
   const [activeTab, setActiveTab] = useState<'home' | 'members' | 'loans' | 'manage'>('home');
+
+  // Reminder language setting
+  const [defaultReminderLang, setDefaultReminderLangState] = useState<ReminderLanguage>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('society_reminder_lang');
+      if (stored === 'en' || stored === 'ur' || stored === 'hi' || stored === 'mr') {
+        return stored;
+      }
+    }
+    return 'en';
+  });
+
+  const setDefaultReminderLang = (lang: ReminderLanguage) => {
+    setDefaultReminderLangState(lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('society_reminder_lang', lang);
+    }
+    if (data?.society) {
+      const updatedSociety = { ...data.society, default_reminder_lang: lang };
+      const updatedData = { ...data, society: updatedSociety };
+      persist(updatedData);
+    }
+  };
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -645,6 +670,8 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         closeAllModals,
         navigateToTab,
         openMemberDetail,
+        defaultReminderLang,
+        setDefaultReminderLang,
       }}
     >
       {children}

@@ -167,9 +167,12 @@ export const LoansView: React.FC = () => {
                           type="button"
                           onClick={() => {
                             openWhatsAppModal({
+                              memberId: borrower.id,
                               memberName: borrower.name,
+                              memberPhone: borrower.phone,
                               societyName: society.name,
                               monthName: selectedPeriod.monthName,
+                              monthNumber: selectedPeriod.month,
                               loanDue: Math.min(loan.monthly_installment, loan.remaining_balance),
                               totalDue: Math.min(loan.monthly_installment, loan.remaining_balance),
                               upiId: society.upi_id,
@@ -264,9 +267,12 @@ export const LoansView: React.FC = () => {
                     type="button"
                     onClick={() => {
                       openWhatsAppModal({
+                        memberId: item.member.id,
                         memberName: item.member.name,
+                        memberPhone: item.member.phone,
                         societyName: society.name,
                         monthName: selectedPeriod.monthName,
+                        monthNumber: selectedPeriod.month,
                         monthlyShareDue: item.contributionAmountDue || undefined,
                         loanDue: item.loanOverdueAmount || undefined,
                         totalDue: item.totalDue,

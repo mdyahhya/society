@@ -10,6 +10,7 @@ export interface Society {
   opening_balance: number;
   contact_phone?: string;
   address?: string;
+  default_reminder_lang?: 'en' | 'ur' | 'hi' | 'mr';
   created_at: string;
   updated_at: string;
 }

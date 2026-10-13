@@ -233,9 +233,12 @@ export const HomeView: React.FC = () => {
                   type="button"
                   onClick={() =>
                     openWhatsAppModal({
+                      memberId: item.member.id,
                       memberName: item.member.name,
+                      memberPhone: item.member.phone,
                       societyName: society.name,
                       monthName: monthMetrics.monthName,
+                      monthNumber: monthMetrics.month,
                       monthlyShareDue: item.contributionAmountDue || undefined,
                       loanDue: item.loanOverdueAmount || undefined,
                       totalDue: item.totalDue,

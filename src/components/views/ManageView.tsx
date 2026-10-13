@@ -12,10 +12,11 @@ import {
   Check,
   ShieldCheck,
   FileSpreadsheet,
+  Globe2,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { formatINR, getMonthName, buildUpiUrl } from '../../utils/formatters';
+import { formatINR, getMonthName, buildUpiUrl, REMINDER_LANGUAGES } from '../../utils/formatters';
 import { QRCodeSVG } from 'qrcode.react';
 
 export const ManageView: React.FC = () => {
@@ -30,6 +31,8 @@ export const ManageView: React.FC = () => {
     repayments,
     defaulters,
     selectedPeriod,
+    defaultReminderLang,
+    setDefaultReminderLang,
   } = useSociety();
 
   const [societyName, setSocietyName] = useState(society.name);
@@ -233,6 +236,44 @@ export const ManageView: React.FC = () => {
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
               />
             </div>
+          </div>
+
+          {/* Default WhatsApp Reminder Language */}
+          <div className="pt-2 border-t border-slate-100">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Globe2 size={14} className="text-forest-800" />
+                <span>Default WhatsApp Reminder Language</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-normal">
+                Fixed default for all reminders
+              </span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {REMINDER_LANGUAGES.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => setDefaultReminderLang(l.key)}
+                  className={`p-2.5 rounded-2xl border text-left transition-all ${
+                    defaultReminderLang === l.key
+                      ? 'bg-forest-50/80 border-forest-800 text-forest-950 ring-2 ring-forest-800/20'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold block">{l.label}</span>
+                    {defaultReminderLang === l.key && (
+                      <span className="w-2 h-2 rounded-full bg-forest-800"></span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">{l.subLabel}</span>
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              All reminder pop-ups will open in this language by default (can still be switched per message).
+            </span>
           </div>
 
           <div className="flex items-center justify-between pt-2">

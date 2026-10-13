@@ -52,6 +52,15 @@ export function formatDate(dateStr: string | undefined | null): string {
   });
 }
 
+export type ReminderLanguage = 'en' | 'ur' | 'hi' | 'mr';
+
+export const REMINDER_LANGUAGES: { key: ReminderLanguage; label: string; subLabel: string }[] = [
+  { key: 'en', label: 'English', subLabel: 'English' },
+  { key: 'ur', label: 'اردو', subLabel: 'Urdu' },
+  { key: 'hi', label: 'हिंदी', subLabel: 'Hindi' },
+  { key: 'mr', label: 'मराठी', subLabel: 'Marathi' },
+];
+
 /**
  * Month names lookup
  */
@@ -60,9 +69,31 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+const MONTH_NAMES_BY_LANG: Record<ReminderLanguage, string[]> = {
+  en: MONTH_NAMES,
+  ur: [
+    'جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون',
+    'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'
+  ],
+  hi: [
+    'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
+    'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'
+  ],
+  mr: [
+    'जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून',
+    'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर'
+  ],
+};
+
 export function getMonthName(monthNumber: number): string {
   const index = Math.max(1, Math.min(12, monthNumber)) - 1;
   return MONTH_NAMES[index] || '';
+}
+
+export function getLocalizedMonthName(monthNumber: number, lang: ReminderLanguage = 'en'): string {
+  const index = Math.max(1, Math.min(12, monthNumber)) - 1;
+  const list = MONTH_NAMES_BY_LANG[lang] || MONTH_NAMES;
+  return list[index] || MONTH_NAMES[index] || '';
 }
 
 /**
@@ -102,23 +133,116 @@ export function buildUpiUrl(params: {
  * Build polite, respectful WhatsApp reminder message for Qarz-e-Hasan mutual fund
  */
 export interface WhatsAppMessagePayload {
+  memberId?: string;
   memberName: string;
+  memberPhone?: string;
   societyName: string;
   monthName: string;
+  monthNumber?: number;
   monthlyShareDue?: number;
   loanDue?: number;
   totalDue: number;
   upiId: string;
+  language?: ReminderLanguage;
 }
 
 export function buildWhatsAppReminderMessage(payload: WhatsAppMessagePayload): string {
+  const lang = payload.language || 'en';
+  const monthName = payload.monthNumber
+    ? getLocalizedMonthName(payload.monthNumber, lang)
+    : payload.monthName;
+
+  if (lang === 'ur') {
+    const parts: string[] = [];
+    parts.push(`*${payload.societyName}*`);
+    parts.push(`----------------------------------------`);
+    parts.push(`السلام علیکم *${payload.memberName}* بھائی،`);
+    parts.push(``);
+    parts.push(`یہ ماہ *${monthName}* کے سوسائٹی کے واجبات کی یاد دہانی ہے:`);
+
+    if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
+      parts.push(`• *ماہانہ شیئر (حصہ):* ${formatINR(payload.monthlyShareDue)}`);
+    }
+
+    if (payload.loanDue && payload.loanDue > 0) {
+      parts.push(`• *قرضِ حسنہ قسط:* ${formatINR(payload.loanDue)}`);
+    }
+
+    parts.push(`----------------------------------------`);
+    parts.push(`*کل واجب الادا رقم:* ${formatINR(payload.totalDue)}`);
+    parts.push(``);
+    parts.push(`براہِ کرم سوسائٹی کے UPI اکاؤنٹ پر رقم ادا فرمائیں:`);
+    parts.push(`*UPI ID:* \`${payload.upiId}\``);
+    parts.push(``);
+    parts.push(`آپ کا بروقت تعاون ہمارے فنڈ کو مضبوط بناتا ہے اور ضرورت مندوں کی مدد کرتا ہے۔`);
+    parts.push(`_جزاک اللہ خیراً_`);
+
+    return parts.join('\n');
+  }
+
+  if (lang === 'hi') {
+    const parts: string[] = [];
+    parts.push(`*${payload.societyName}*`);
+    parts.push(`----------------------------------------`);
+    parts.push(`नमस्ते / अस्सलाम अलैकुम *${payload.memberName}* जी,`);
+    parts.push(``);
+    parts.push(`यह *${monthName}* माह के वेलफेयर सोसाइटी के बकाए की विनम्र याददिहानी है:`);
+
+    if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
+      parts.push(`• *मासिक शेयर (हिस्सा):* ${formatINR(payload.monthlyShareDue)}`);
+    }
+
+    if (payload.loanDue && payload.loanDue > 0) {
+      parts.push(`• *क़र्ज़-ए-हसना किस्त:* ${formatINR(payload.loanDue)}`);
+    }
+
+    parts.push(`----------------------------------------`);
+    parts.push(`*कुल देय राशि:* ${formatINR(payload.totalDue)}`);
+    parts.push(``);
+    parts.push(`आप सोसाइटी के बैंक खाते में सीधे UPI द्वारा भुगतान कर सकते हैं:`);
+    parts.push(`*UPI ID:* \`${payload.upiId}\``);
+    parts.push(``);
+    parts.push(`समय पर दिया गया आपका सहयोग फंड को मजबूत करता है और जरूरतमंदों की मदद करता है।`);
+    parts.push(`_धन्यवाद / जज़ाकल्लाह खैर_`);
+
+    return parts.join('\n');
+  }
+
+  if (lang === 'mr') {
+    const parts: string[] = [];
+    parts.push(`*${payload.societyName}*`);
+    parts.push(`----------------------------------------`);
+    parts.push(`सस्नेह नमस्कार *${payload.memberName}*,`);
+    parts.push(``);
+    parts.push(`हे *${monthName}* महिन्याच्या वेलफेअर सोसायटीच्या देय रकमेचे विनम्र स्मरणपत्र आहे:`);
+
+    if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
+      parts.push(`• *मासिक हिस्सा (Share):* ${formatINR(payload.monthlyShareDue)}`);
+    }
+
+    if (payload.loanDue && payload.loanDue > 0) {
+      parts.push(`• *कर्ज-ए-हसना हप्ता:* ${formatINR(payload.loanDue)}`);
+    }
+
+    parts.push(`----------------------------------------`);
+    parts.push(`*एकूण देय रक्कम:* ${formatINR(payload.totalDue)}`);
+    parts.push(``);
+    parts.push(`आपण थेट सोसायटीच्या UPI खात्यावर रक्कम भरू शकता:`);
+    parts.push(`*UPI ID:* \`${payload.upiId}\``);
+    parts.push(``);
+    parts.push(`वेळेवर केलेला आपला सहभाग फंड मजबूत करतो आणि गरजू बांधवांना मदत करतो.`);
+    parts.push(`_धन्यवाद / जझाकल्ला खैर_`);
+
+    return parts.join('\n');
+  }
+
+  // Default English (en)
   const parts: string[] = [];
-  
   parts.push(`*${payload.societyName}*`);
   parts.push(`----------------------------------------`);
   parts.push(`Assalamu Alaikum / Greetings *${payload.memberName}*,`);
   parts.push(``);
-  parts.push(`This is a gentle reminder regarding your monthly welfare society dues for *${payload.monthName}*:`);
+  parts.push(`This is a gentle reminder regarding your monthly welfare society dues for *${monthName}*:`);
 
   if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
     parts.push(`• *Monthly Share:* ${formatINR(payload.monthlyShareDue)}`);
