@@ -12,6 +12,7 @@ import {
 import { storageService, AppStoreData } from '../services/storage';
 import { getCurrentPeriod, getMonthName, WhatsAppMessagePayload, ReminderLanguage } from '../utils/formatters';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { AppLanguage, TranslationKey, getTranslation } from '../i18n/translations';
 
 interface SocietyContextType {
   society: Society;
@@ -60,6 +61,8 @@ interface SocietyContextType {
   openQrModal: (amount?: number, note?: string) => void;
   whatsAppModalOpen: boolean;
   setWhatsAppModalOpen: (open: boolean) => void;
+  whatsAppPayload: WhatsAppMessagePayload | null;
+  openWhatsAppModal: (payload: WhatsAppMessagePayload) => void;
   isAddMemberModalOpen: boolean;
   setIsAddMemberModalOpen: (open: boolean) => void;
   openAddMemberModal: () => void;
@@ -68,6 +71,9 @@ interface SocietyContextType {
   openMemberDetail: (member: Member | null) => void;
   defaultReminderLang: ReminderLanguage;
   setDefaultReminderLang: (lang: ReminderLanguage) => void;
+  appLanguage: AppLanguage;
+  setAppLanguage: (lang: AppLanguage) => void;
+  t: (key: TranslationKey, fallback?: string) => string;
 }
 
 const SocietyContext = createContext<SocietyContextType | undefined>(undefined);
@@ -76,6 +82,28 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [data, setData] = useState<AppStoreData | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(getCurrentPeriod());
   const [activeTab, setActiveTab] = useState<'home' | 'members' | 'loans' | 'manage'>('home');
+
+  // App UI language setting (en, hi, mr)
+  const [appLanguage, setAppLanguageState] = useState<AppLanguage>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('society_app_language');
+      if (stored === 'en' || stored === 'hi' || stored === 'mr') {
+        return stored;
+      }
+    }
+    return 'en';
+  });
+
+  const setAppLanguage = (lang: AppLanguage) => {
+    setAppLanguageState(lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('society_app_language', lang);
+    }
+  };
+
+  const t = (key: TranslationKey, fallback?: string): string => {
+    return getTranslation(appLanguage, key, fallback);
+  };
 
   // Reminder language setting
   const [defaultReminderLang, setDefaultReminderLangState] = useState<ReminderLanguage>(() => {
@@ -672,6 +700,9 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         openMemberDetail,
         defaultReminderLang,
         setDefaultReminderLang,
+        appLanguage,
+        setAppLanguage,
+        t,
       }}
     >
       {children}

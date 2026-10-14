@@ -24,6 +24,7 @@ export const LoansView: React.FC = () => {
     openWhatsAppModal,
     society,
     selectedPeriod,
+    t,
   } = useSociety();
 
   const [activeTab, setActiveTab] = useState<'active' | 'defaulters' | 'closed'>('active');
@@ -36,9 +37,9 @@ export const LoansView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Qarz-e-Hasan Loans</h2>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('loans.title', 'Qarz-e-Hasan Loans')}</h2>
           <p className="text-xs text-slate-500">
-            Interest-free loan cycle management & defaulter tracking
+            {t('loans.subtitle', 'Interest-free loan cycle management & defaulter tracking')}
           </p>
         </div>
         <button
@@ -47,7 +48,7 @@ export const LoansView: React.FC = () => {
           className="px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
         >
           <PlusCircle size={15} />
-          <span>New Loan</span>
+          <span>{t('loans.disburseNewLoan', 'New Loan')}</span>
         </button>
       </div>
 
@@ -63,7 +64,7 @@ export const LoansView: React.FC = () => {
           }`}
         >
           <HandCoins size={15} />
-          <span>Active ({activeLoans.length})</span>
+          <span>{t('loans.activeLoansCount', 'Active')} ({activeLoans.length})</span>
         </button>
         <button
           type="button"
@@ -75,7 +76,7 @@ export const LoansView: React.FC = () => {
           }`}
         >
           <ShieldAlert size={15} />
-          <span>Defaulters ({defaulters.length})</span>
+          <span>{t('home.pendingDues', 'Defaulters')} ({defaulters.length})</span>
         </button>
         <button
           type="button"
@@ -181,7 +182,7 @@ export const LoansView: React.FC = () => {
                           className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold flex items-center gap-1 transition-colors"
                         >
                           <MessageSquare size={13} />
-                          <span>Remind</span>
+                          <span>{t('loans.remind', 'Remind')}</span>
                         </button>
                       )}
                       <button
@@ -190,7 +191,7 @@ export const LoansView: React.FC = () => {
                         className="px-3 py-1.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-semibold flex items-center gap-1 transition-colors shadow-sm"
                       >
                         <RotateCcw size={13} />
-                        <span>Log Repay</span>
+                        <span>{t('loans.repay', 'Log Repay')}</span>
                       </button>
                     </div>
                   </div>

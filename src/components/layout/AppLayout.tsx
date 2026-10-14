@@ -13,7 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
-import { getCurrentPeriod, getMonthName } from '../../utils/formatters';
+import { getCurrentPeriod, getLocalizedMonthName } from '../../utils/formatters';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -24,18 +24,20 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     society,
     selectedPeriod,
     setSelectedPeriod,
+    t,
+    appLanguage,
   } = useSociety();
 
   const currentPeriod = getCurrentPeriod();
 
-  // Navigation Items
+  // Navigation Items translated
   const navItems = [
-    { key: 'home' as const, label: 'Home', icon: Home },
-    { key: 'members' as const, label: 'Members', icon: Users },
+    { key: 'home' as const, label: t('nav.home'), icon: Home },
+    { key: 'members' as const, label: t('nav.members'), icon: Users },
     // Center [+] is special
-    { key: 'create' as const, label: 'Create', icon: PlusCircle, isAction: true },
-    { key: 'loans' as const, label: 'Loans', icon: HandCoins },
-    { key: 'manage' as const, label: 'Manage', icon: Settings },
+    { key: 'create' as const, label: t('header.quickAction'), icon: PlusCircle, isAction: true },
+    { key: 'loans' as const, label: t('nav.loans'), icon: HandCoins },
+    { key: 'manage' as const, label: t('nav.manage'), icon: Settings },
   ];
 
   return (
@@ -70,7 +72,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             className="w-full py-2.5 px-4 rounded-2xl bg-forest-800 hover:bg-forest-900 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
           >
             <PlusCircle size={16} />
-            <span>New Transaction</span>
+            <span>{t('header.quickAction')}</span>
           </button>
 
           {/* Nav Links */}
@@ -108,7 +110,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               onClick={() => openQrModal()}
               className="text-forest-800 hover:underline"
             >
-              Show QR
+              {t('manage.showQr')}
             </button>
           </div>
           <div className="font-mono text-slate-700 truncate" title={society.upi_id}>
@@ -134,7 +136,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 title="Back to Home"
               >
                 <ArrowLeft size={18} />
-                <span className="text-xs font-semibold hidden sm:inline">Home</span>
+                <span className="text-xs font-semibold hidden sm:inline">{t('header.home')}</span>
               </button>
             ) : (
               <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center">
@@ -146,7 +148,13 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 {society.name}
               </span>
               <span className="text-sm font-extrabold text-slate-900 capitalize">
-                {activeTab} Overview
+                {activeTab === 'home'
+                  ? t('nav.home')
+                  : activeTab === 'members'
+                  ? t('nav.members')
+                  : activeTab === 'loans'
+                  ? t('nav.loans')
+                  : t('nav.manage')}
               </span>
             </div>
           </div>
@@ -162,7 +170,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   setSelectedPeriod({
                     year: y,
                     month: m,
-                    monthName: getMonthName(m),
+                    monthName: getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en'),
                   });
                 }}
                 className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 pr-7 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800"
@@ -174,7 +182,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   const m = d.getMonth() + 1;
                   return (
                     <option key={`${y}-${m}`} value={`${y}-${m}`}>
-                      {getMonthName(m)} {y}
+                      {getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en')} {y}
                     </option>
                   );
                 })}
@@ -222,7 +230,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 <div className="w-12 h-12 rounded-full bg-forest-800 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-forest-900 transition-transform active:scale-95">
                   <PlusCircle size={26} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-700 mt-0.5">Create</span>
+                <span className="text-[10px] font-bold text-slate-700 mt-0.5">{t('header.quickAction')}</span>
               </button>
             );
           }

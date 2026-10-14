@@ -33,6 +33,8 @@ export const HomeView: React.FC = () => {
     openWhatsAppModal,
     setActiveTab,
     setSelectedMemberForDetail,
+    t,
+    appLanguage,
   } = useSociety();
 
   // Combine recent activity
@@ -96,7 +98,7 @@ export const HomeView: React.FC = () => {
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-                Available Liquidity Pool
+                {t('home.availablePool')}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {formatINR(poolMetrics.availablePoolBalance)}
@@ -112,7 +114,7 @@ export const HomeView: React.FC = () => {
               className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <QrCode size={15} />
-              <span>UPI QR</span>
+              <span>{t('header.societyQr')}</span>
             </button>
             <button
               type="button"
@@ -120,7 +122,7 @@ export const HomeView: React.FC = () => {
               className="px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <PlusCircle size={15} />
-              <span>Log Pay</span>
+              <span>{t('members.logPay')}</span>
             </button>
           </div>
         </div>
@@ -193,7 +195,7 @@ export const HomeView: React.FC = () => {
             <div className="flex items-center gap-2 text-amber-800">
               <ShieldAlert size={18} />
               <h3 className="text-sm font-bold text-slate-900">
-                Action Needed: Defaulters ({defaulters.length})
+                {t('home.pendingDues')} ({defaulters.length})
               </h3>
             </div>
             <button
@@ -220,11 +222,11 @@ export const HomeView: React.FC = () => {
                         ? 'Share + Loan Due'
                         : item.type === 'loan'
                         ? 'Loan Installment Due'
-                        : `${item.contributionMonthsOverdue} mo overdue`}
+                        : `${item.contributionMonthsOverdue} ${t('home.monthsOverdue')}`}
                     </span>
                   </div>
                   <span className="text-xs text-slate-500 block mt-0.5">
-                    Total Due: <strong className="text-slate-800">{formatINR(item.totalDue)}</strong>
+                    {t('home.totalDue')}: <strong className="text-slate-800">{formatINR(item.totalDue)}</strong>
                   </span>
                 </div>
 
@@ -249,7 +251,7 @@ export const HomeView: React.FC = () => {
                   title="Send WhatsApp Reminder"
                 >
                   <MessageSquare size={13} />
-                  <span>Remind</span>
+                  <span>{t('home.remind')}</span>
                 </button>
               </div>
             ))}

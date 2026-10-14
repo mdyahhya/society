@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { useSociety } from '../../context/SocietyContext';
-import { formatINR, getCurrentPeriod, getMonthName } from '../../utils/formatters';
+import { formatINR, getCurrentPeriod, getMonthName, getLocalizedMonthName } from '../../utils/formatters';
 
 export const CreateActionModal: React.FC = () => {
   const {
@@ -24,6 +24,8 @@ export const CreateActionModal: React.FC = () => {
     logRepayment,
     openWhatsAppModal,
     society,
+    t,
+    appLanguage,
   } = useSociety();
 
   const [activeTab, setActiveTab] = useState<'contribution' | 'loan' | 'repayment' | 'reminder'>('contribution');
@@ -170,8 +172,8 @@ export const CreateActionModal: React.FC = () => {
     <Modal
       isOpen={createModalOpen}
       onClose={() => setCreateModalOpen(false)}
-      title="Society Quick Action"
-      subtitle="Record shares, disburse loans, or log repayments"
+      title={t('modal.title')}
+      subtitle={t('modal.subtitle')}
       maxWidth="md"
     >
       <div>
@@ -187,7 +189,7 @@ export const CreateActionModal: React.FC = () => {
             }`}
           >
             <CreditCard size={16} />
-            <span className="truncate">Add Share</span>
+            <span className="truncate">{t('modal.tabShare')}</span>
           </button>
           <button
             type="button"
@@ -199,7 +201,7 @@ export const CreateActionModal: React.FC = () => {
             }`}
           >
             <HandCoins size={16} />
-            <span className="truncate">New Loan</span>
+            <span className="truncate">{t('modal.tabLoan')}</span>
           </button>
           <button
             type="button"
@@ -211,7 +213,7 @@ export const CreateActionModal: React.FC = () => {
             }`}
           >
             <RotateCcw size={16} />
-            <span className="truncate">Repay Loan</span>
+            <span className="truncate">{t('modal.tabRepay')}</span>
           </button>
           <button
             type="button"
@@ -223,7 +225,7 @@ export const CreateActionModal: React.FC = () => {
             }`}
           >
             <MessageSquare size={16} />
-            <span className="truncate">WhatsApp</span>
+            <span className="truncate">{t('modal.tabReminder')}</span>
           </button>
         </div>
 
@@ -235,12 +237,12 @@ export const CreateActionModal: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 1: Log Monthly Contribution */}
+        {/* TAB 1: Log Monthly Share */}
         {activeTab === 'contribution' && (
           <form onSubmit={handleContributionSubmit} className="space-y-3.5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Select Member *
+                {t('modal.selectMember')} *
               </label>
               <select
                 required
@@ -252,7 +254,7 @@ export const CreateActionModal: React.FC = () => {
                 }}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-forest-800"
               >
-                <option value="">Choose a member...</option>
+                <option value="">{t('modal.selectMember')}...</option>
                 {activeMembers.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.member_no} — {m.name} (Share: {formatINR(m.monthly_share)})
@@ -264,7 +266,7 @@ export const CreateActionModal: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Month
+                  {t('modal.month')}
                 </label>
                 <select
                   value={contMonth}
@@ -273,14 +275,14 @@ export const CreateActionModal: React.FC = () => {
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
-                      {getMonthName(m)}
+                      {getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en')}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Year
+                  {t('modal.year')}
                 </label>
                 <input
                   type="number"
@@ -294,7 +296,7 @@ export const CreateActionModal: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Amount (₹) *
+                  {t('modal.amount')} *
                 </label>
                 <input
                   type="number"
@@ -308,23 +310,23 @@ export const CreateActionModal: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Method
+                  {t('modal.paymentMethod')}
                 </label>
                 <select
                   value={contMethod}
                   onChange={(e) => setContMethod(e.target.value as any)}
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-forest-800"
                 >
-                  <option value="upi">UPI (GPay/PhonePe)</option>
-                  <option value="cash">Cash</option>
-                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="upi">{t('modal.methodUpi')}</option>
+                  <option value="cash">{t('modal.methodCash')}</option>
+                  <option value="bank_transfer">{t('modal.methodBank')}</option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Reference / Note (Optional)
+                {t('modal.notes')}
               </label>
               <input
                 type="text"
@@ -339,7 +341,7 @@ export const CreateActionModal: React.FC = () => {
               type="submit"
               className="w-full mt-2 py-3 px-4 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-semibold text-sm transition-colors shadow-sm"
             >
-              Record Monthly Contribution
+              {t('modal.saveShare')}
             </button>
           </form>
         )}
@@ -348,13 +350,13 @@ export const CreateActionModal: React.FC = () => {
         {activeTab === 'loan' && (
           <form onSubmit={handleLoanSubmit} className="space-y-3.5">
             <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-600">Available Pool Balance:</span>
+              <span className="font-semibold text-slate-600">{t('home.availablePool', 'Available Pool Balance')}:</span>
               <span className="font-bold text-forest-800">{formatINR(poolMetrics.availablePoolBalance)}</span>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Borrower (Member) *
+                {t('loans.borrower', 'Borrower (Member)')} *
               </label>
               <select
                 required
@@ -362,7 +364,7 @@ export const CreateActionModal: React.FC = () => {
                 onChange={(e) => setLoanMemberId(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-forest-800"
               >
-                <option value="">Select member for loan...</option>
+                <option value="">{t('modal.selectMember', 'Select member for loan...')}</option>
                 {activeMembers.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.member_no} — {m.name}
@@ -374,7 +376,7 @@ export const CreateActionModal: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Principal Amount (₹) *
+                  {t('modal.loanAmount', 'Principal Amount (₹)')} *
                 </label>
                 <input
                   type="number"
@@ -389,7 +391,7 @@ export const CreateActionModal: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Monthly Installment (₹) *
+                  {t('modal.monthlyInstallment', 'Monthly Installment (₹)')} *
                 </label>
                 <input
                   type="number"
@@ -407,7 +409,7 @@ export const CreateActionModal: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Disbursed Date
+                  {t('modal.disbursedDate', 'Disbursed Date')}
                 </label>
                 <input
                   type="date"
@@ -418,7 +420,7 @@ export const CreateActionModal: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Repayment Starts
+                  {t('modal.firstRepaymentDate', 'Repayment Starts')}
                 </label>
                 <input
                   type="date"
@@ -431,7 +433,7 @@ export const CreateActionModal: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Loan Purpose / Notes (Optional)
+                {t('modal.loanPurpose', 'Loan Purpose / Notes (Optional)')}
               </label>
               <input
                 type="text"
@@ -446,7 +448,7 @@ export const CreateActionModal: React.FC = () => {
               type="submit"
               className="w-full mt-2 py-3 px-4 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-semibold text-sm transition-colors shadow-sm"
             >
-              Disburse Qarz-e-Hasan Loan
+              {t('modal.disburseLoanBtn', 'Disburse Qarz-e-Hasan Loan')}
             </button>
           </form>
         )}
@@ -456,7 +458,7 @@ export const CreateActionModal: React.FC = () => {
           <form onSubmit={handleRepaymentSubmit} className="space-y-3.5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Select Active Loan *
+                {t('modal.selectLoan', 'Select Active Loan')} *
               </label>
               <select
                 required
@@ -468,7 +470,7 @@ export const CreateActionModal: React.FC = () => {
                 }}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-forest-800"
               >
-                <option value="">Select loan to repay...</option>
+                <option value="">{t('modal.selectLoan', 'Select loan to repay...')}</option>
                 {activeLoans.map((l) => {
                   const borrower = members.find((m) => m.id === l.member_id);
                   return (
@@ -483,7 +485,7 @@ export const CreateActionModal: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Repayment Amount (₹) *
+                  {t('modal.amount', 'Repayment Amount (₹)')} *
                 </label>
                 <input
                   type="number"
@@ -497,23 +499,23 @@ export const CreateActionModal: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Method
+                  {t('modal.paymentMethod', 'Method')}
                 </label>
                 <select
                   value={repMethod}
                   onChange={(e) => setRepMethod(e.target.value as any)}
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-forest-800"
                 >
-                  <option value="upi">UPI (Direct to Society)</option>
-                  <option value="cash">Cash</option>
-                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="upi">{t('modal.methodUpi', 'UPI (Direct to Society)')}</option>
+                  <option value="cash">{t('modal.methodCash', 'Cash')}</option>
+                  <option value="bank_transfer">{t('modal.methodBank', 'Bank Transfer')}</option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Date
+                {t('modal.repayDate', 'Date')}
               </label>
               <input
                 type="date"
@@ -525,7 +527,7 @@ export const CreateActionModal: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Notes
+                {t('modal.notes', 'Notes')}
               </label>
               <input
                 type="text"
@@ -540,7 +542,7 @@ export const CreateActionModal: React.FC = () => {
               type="submit"
               className="w-full mt-2 py-3 px-4 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-semibold text-sm transition-colors shadow-sm"
             >
-              Record Loan Repayment
+              {t('modal.saveRepayment', 'Record Loan Repayment')}
             </button>
           </form>
         )}
@@ -583,7 +585,7 @@ export const CreateActionModal: React.FC = () => {
                       className="px-3 py-1.5 rounded-lg bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
                     >
                       <MessageSquare size={13} />
-                      <span>Prepare</span>
+                      <span>{t('modal.prepareReminder', 'Prepare')}</span>
                     </button>
                   </div>
                 );

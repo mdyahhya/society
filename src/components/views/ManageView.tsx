@@ -17,6 +17,7 @@ import {
 import { useSociety } from '../../context/SocietyContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { formatINR, getMonthName, buildUpiUrl, REMINDER_LANGUAGES } from '../../utils/formatters';
+import { APP_LANGUAGES } from '../../i18n/translations';
 import { QRCodeSVG } from 'qrcode.react';
 
 export const ManageView: React.FC = () => {
@@ -33,6 +34,9 @@ export const ManageView: React.FC = () => {
     selectedPeriod,
     defaultReminderLang,
     setDefaultReminderLang,
+    appLanguage,
+    setAppLanguage,
+    t,
   } = useSociety();
 
   const [societyName, setSocietyName] = useState(society.name);
@@ -112,13 +116,45 @@ export const ManageView: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-6">
       {/* 1. Header */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Society Settings & Reports</h2>
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('manage.title')}</h2>
         <p className="text-xs text-slate-500">
-          Manage UPI ID, export financial reports, and configure system storage
+          {t('manage.subtitle')}
         </p>
       </div>
 
-      {/* 2. Society Details & UPI Configuration */}
+      {/* 2. Application Language Setting Card */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-9 h-9 rounded-xl bg-forest-50 text-forest-800 flex items-center justify-center">
+            <Globe2 size={18} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">{t('manage.appLanguage')}</h3>
+            <p className="text-xs text-slate-500">{t('manage.appLanguageDesc')}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2.5 pt-1">
+          {APP_LANGUAGES.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setAppLanguage(item.key)}
+              className={`p-3 rounded-2xl border text-center transition-all ${
+                appLanguage === item.key
+                  ? 'bg-forest-50/90 border-forest-800 text-forest-950 ring-2 ring-forest-800/20 font-bold shadow-2xs'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span className="text-xl block mb-1">{item.flag}</span>
+              <span className="text-sm font-bold block">{item.label}</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">{item.subLabel}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Society Details & UPI Configuration */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
@@ -126,7 +162,7 @@ export const ManageView: React.FC = () => {
               <Building2 size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Society Profile & Direct UPI</h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('manage.societyProfile')}</h3>
               <p className="text-xs text-slate-500">Direct member payments without platform custody</p>
             </div>
           </div>
@@ -136,14 +172,14 @@ export const ManageView: React.FC = () => {
             className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <QrCode size={14} />
-            <span>Show QR</span>
+            <span>{t('manage.showQr')}</span>
           </button>
         </div>
 
         <form onSubmit={handleSaveProfile} className="space-y-3.5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Society Name *
+              {t('manage.societyName')} *
             </label>
             <input
               type="text"
@@ -157,7 +193,7 @@ export const ManageView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Society UPI VPA (Direct Bank ID) *
+                {t('manage.upiId')} *
               </label>
               <div className="relative">
                 <input
@@ -187,7 +223,7 @@ export const ManageView: React.FC = () => {
                   </div>
                   <div className="overflow-hidden text-left">
                     <span className="inline-block text-[10px] font-bold text-forest-800 uppercase tracking-wide bg-forest-100/70 px-1.5 py-0.5 rounded-md">
-                      Live Verified QR
+                      {t('manage.liveQr')}
                     </span>
                     <p className="text-xs font-medium text-slate-700 mt-0.5 truncate">
                       Encodes: <span className="font-mono font-semibold">{upiId.trim()}</span>
@@ -202,7 +238,7 @@ export const ManageView: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Initial Opening Pool Balance (₹)
+                {t('manage.openingBalance')}
               </label>
               <input
                 type="number"
@@ -216,7 +252,7 @@ export const ManageView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Treasurer Contact Phone
+                {t('manage.contactPhone')}
               </label>
               <input
                 type="tel"
@@ -227,7 +263,7 @@ export const ManageView: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Address / Location
+                {t('manage.address')}
               </label>
               <input
                 type="text"
@@ -243,10 +279,10 @@ export const ManageView: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Globe2 size={14} className="text-forest-800" />
-                <span>Default WhatsApp Reminder Language</span>
+                <span>{t('manage.reminderLanguage')}</span>
               </span>
               <span className="text-[11px] text-slate-400 font-normal">
-                Fixed default for all reminders
+                {t('manage.reminderLanguageDesc')}
               </span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -280,7 +316,7 @@ export const ManageView: React.FC = () => {
             {savedSuccess ? (
               <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1">
                 <CheckCircle2 size={15} />
-                <span>Profile updated successfully</span>
+                <span>{t('manage.profileUpdated')}</span>
               </span>
             ) : (
               <span></span>
@@ -289,7 +325,7 @@ export const ManageView: React.FC = () => {
               type="submit"
               className="py-2.5 px-5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold transition-colors shadow-sm"
             >
-              Save Society Profile
+              {t('manage.saveProfile')}
             </button>
           </div>
         </form>
@@ -302,7 +338,7 @@ export const ManageView: React.FC = () => {
             <FileSpreadsheet size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Export Center & AGM Reports</h3>
+            <h3 className="text-sm font-bold text-slate-900">{t('manage.reports')}</h3>
             <p className="text-xs text-slate-500">Download formatted CSV reports for record-keeping and audits</p>
           </div>
         </div>
@@ -323,7 +359,7 @@ export const ManageView: React.FC = () => {
               </span>
             </div>
             <span className="text-[10px] font-semibold text-forest-800 mt-2 block">
-              Download CSV →
+              {t('manage.downloadCsv')} →
             </span>
           </button>
 
@@ -342,7 +378,7 @@ export const ManageView: React.FC = () => {
               </span>
             </div>
             <span className="text-[10px] font-semibold text-forest-800 mt-2 block">
-              Download CSV →
+              {t('manage.downloadCsv')} →
             </span>
           </button>
 
@@ -361,7 +397,7 @@ export const ManageView: React.FC = () => {
               </span>
             </div>
             <span className="text-[10px] font-semibold text-amber-700 mt-2 block">
-              Download CSV →
+              {t('manage.downloadCsv')} →
             </span>
           </button>
         </div>
@@ -375,8 +411,8 @@ export const ManageView: React.FC = () => {
               <Database size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Data Backup & Storage</h3>
-              <p className="text-xs text-slate-500">System data retention and synchronization status</p>
+              <h3 className="text-sm font-bold text-slate-900">{t('manage.dataBackup')}</h3>
+              <p className="text-xs text-slate-500">{t('manage.dataBackupDesc')}</p>
             </div>
           </div>
 
@@ -387,7 +423,7 @@ export const ManageView: React.FC = () => {
                 : 'bg-slate-100 text-slate-700 border-slate-200'
             }`}
           >
-            {isCloudSyncActive ? 'Cloud Sync Active' : 'Device Storage Mode'}
+            {isCloudSyncActive ? t('manage.cloudSyncActive') : t('manage.deviceStorage')}
           </span>
         </div>
 
@@ -409,7 +445,7 @@ export const ManageView: React.FC = () => {
             className="text-xs font-semibold text-slate-600 hover:text-rose-600 flex items-center gap-1"
           >
             <RotateCcw size={13} />
-            <span>Reset to Sample Data</span>
+            <span>{t('manage.resetData')}</span>
           </button>
         </div>
       </div>

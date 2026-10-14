@@ -186,10 +186,10 @@ export function buildWhatsAppReminderMessage(payload: WhatsAppMessagePayload): s
     parts.push(`----------------------------------------`);
     parts.push(`नमस्ते / अस्सलाम अलैकुम *${payload.memberName}* जी,`);
     parts.push(``);
-    parts.push(`यह *${monthName}* माह के वेलफेयर सोसाइटी के बकाए की विनम्र याददिहानी है:`);
+    parts.push(`यह *${monthName}* महीने के सोसाइटी शेयर और किस्त का छोटा सा रिमाइंडर है:`);
 
     if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
-      parts.push(`• *मासिक शेयर (हिस्सा):* ${formatINR(payload.monthlyShareDue)}`);
+      parts.push(`• *महीने का शेयर:* ${formatINR(payload.monthlyShareDue)}`);
     }
 
     if (payload.loanDue && payload.loanDue > 0) {
@@ -197,13 +197,13 @@ export function buildWhatsAppReminderMessage(payload: WhatsAppMessagePayload): s
     }
 
     parts.push(`----------------------------------------`);
-    parts.push(`*कुल देय राशि:* ${formatINR(payload.totalDue)}`);
+    parts.push(`*कुल बाकी रकम:* ${formatINR(payload.totalDue)}`);
     parts.push(``);
-    parts.push(`आप सोसाइटी के बैंक खाते में सीधे UPI द्वारा भुगतान कर सकते हैं:`);
+    parts.push(`आप सीधे सोसाइटी के इस UPI ID पर पैसे भेज सकते हैं:`);
     parts.push(`*UPI ID:* \`${payload.upiId}\``);
     parts.push(``);
-    parts.push(`समय पर दिया गया आपका सहयोग फंड को मजबूत करता है और जरूरतमंदों की मदद करता है।`);
-    parts.push(`_धन्यवाद / जज़ाकल्लाह खैर_`);
+    parts.push(`आपके समय पर सहयोग से फंड मजबूत होता है और सभी भाइयों को वक्त पर मदद मिलती है।`);
+    parts.push(`_शुक्रिया / जज़ाकल्लाह खैर_`);
 
     return parts.join('\n');
   }
@@ -214,10 +214,10 @@ export function buildWhatsAppReminderMessage(payload: WhatsAppMessagePayload): s
     parts.push(`----------------------------------------`);
     parts.push(`सस्नेह नमस्कार *${payload.memberName}*,`);
     parts.push(``);
-    parts.push(`हे *${monthName}* महिन्याच्या वेलफेअर सोसायटीच्या देय रकमेचे विनम्र स्मरणपत्र आहे:`);
+    parts.push(`हे *${monthName}* महिन्याच्या सोसायटीच्या वर्गणी व हप्त्याबद्दलचे स्मरणपत्र आहे:`);
 
     if (payload.monthlyShareDue && payload.monthlyShareDue > 0) {
-      parts.push(`• *मासिक हिस्सा (Share):* ${formatINR(payload.monthlyShareDue)}`);
+      parts.push(`• *महिन्याची वर्गणी (Share):* ${formatINR(payload.monthlyShareDue)}`);
     }
 
     if (payload.loanDue && payload.loanDue > 0) {
@@ -225,12 +225,12 @@ export function buildWhatsAppReminderMessage(payload: WhatsAppMessagePayload): s
     }
 
     parts.push(`----------------------------------------`);
-    parts.push(`*एकूण देय रक्कम:* ${formatINR(payload.totalDue)}`);
+    parts.push(`*एकूण बाकी रक्कम:* ${formatINR(payload.totalDue)}`);
     parts.push(``);
-    parts.push(`आपण थेट सोसायटीच्या UPI खात्यावर रक्कम भरू शकता:`);
+    parts.push(`आपण थेट सोसायटीच्या या UPI आयडीवर पैसे पाठवू शकता:`);
     parts.push(`*UPI ID:* \`${payload.upiId}\``);
     parts.push(``);
-    parts.push(`वेळेवर केलेला आपला सहभाग फंड मजबूत करतो आणि गरजू बांधवांना मदत करतो.`);
+    parts.push(`वेळेवर सहकार्य केल्याने फंड मजबूत राहतो आणि सर्वांना वेळेवर मदत मिळते.`);
     parts.push(`_धन्यवाद / जझाकल्ला खैर_`);
 
     return parts.join('\n');
