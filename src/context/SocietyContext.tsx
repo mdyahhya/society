@@ -87,8 +87,8 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('society_app_language');
-      if (stored === 'en' || stored === 'hi' || stored === 'mr') {
-        return stored;
+      if (stored === 'en' || stored === 'ur' || stored === 'hi' || stored === 'mr') {
+        return stored as AppLanguage;
       }
     }
     return 'en';

@@ -125,18 +125,18 @@ export const LoansView: React.FC = () => {
                         </h3>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Disbursed on {formatDate(loan.disbursed_date)} • Monthly Inst:{' '}
+                        {t('loans.disbursedOn', 'Date Given')}: {formatDate(loan.disbursed_date)} • {t('loans.installment', 'Monthly Inst')}:{' '}
                         <strong className="text-slate-800">{formatINR(loan.monthly_installment)}</strong>
                       </p>
                       {loan.purpose && (
                         <p className="text-[11px] text-slate-400 italic mt-0.5">
-                          Purpose: {loan.purpose}
+                          {loan.purpose}
                         </p>
                       )}
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs font-semibold text-slate-400 block">Remaining</span>
+                      <span className="text-xs font-semibold text-slate-400 block">{t('loans.balance', 'Remaining Due')}</span>
                       <span className="text-base font-extrabold text-forest-800">
                         {formatINR(loan.remaining_balance)}
                       </span>
@@ -146,8 +146,8 @@ export const LoansView: React.FC = () => {
                   {/* Repayment Progress Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[11px] text-slate-500 font-medium">
-                      <span>Repaid: {formatINR(repaid)} ({percentRepaid}%)</span>
-                      <span>Total: {formatINR(loan.principal_amount)}</span>
+                      <span>{t('loans.recoveredSoFar', 'Repaid')}: {formatINR(repaid)} ({percentRepaid}%)</span>
+                      <span>{t('loans.principal', 'Total')}: {formatINR(loan.principal_amount)}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                       <div
@@ -237,27 +237,27 @@ export const LoansView: React.FC = () => {
                     <h3 className="text-sm font-bold text-slate-900">{item.member.name}</h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                       {item.type === 'both'
-                        ? 'Share + Loan Overdue'
+                        ? t('home.dueBoth', 'Share + Loan Due')
                         : item.type === 'loan'
-                        ? 'Loan Overdue'
-                        : `${item.contributionMonthsOverdue} mo overdue`}
+                        ? t('home.dueLoan', 'Loan Installment Due')
+                        : `${item.contributionMonthsOverdue} ${t('home.monthsOverdue', 'months overdue')}`}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                    <span>Phone: {item.member.phone}</span>
+                    <span>{item.member.phone}</span>
                     {item.contributionAmountDue > 0 && (
-                      <span>Share Due: <strong>{formatINR(item.contributionAmountDue)}</strong></span>
+                      <span>{t('members.share', 'Share')}: <strong>{formatINR(item.contributionAmountDue)}</strong></span>
                     )}
                     {item.loanOverdueAmount > 0 && (
-                      <span>Loan Inst: <strong>{formatINR(item.loanOverdueAmount)}</strong></span>
+                      <span>{t('loans.installment', 'Loan Inst')}: <strong>{formatINR(item.loanOverdueAmount)}</strong></span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <div className="text-left sm:text-right">
-                    <span className="text-[11px] text-slate-400 block font-medium">Total Due</span>
+                    <span className="text-[11px] text-slate-400 block font-medium">{t('home.totalDue', 'Total Due')}</span>
                     <span className="text-base font-extrabold text-amber-900">
                       {formatINR(item.totalDue)}
                     </span>

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Home,
   Users,
@@ -11,9 +10,11 @@ import {
   Building2,
   ShieldCheck,
   ArrowLeft,
+  Globe2,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
-import { getCurrentPeriod, getLocalizedMonthName } from '../../utils/formatters';
+import { getCurrentPeriod } from '../../utils/formatters';
+import { APP_LANGUAGES, getLocalizedMonthName } from '../../i18n/translations';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -26,6 +27,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     setSelectedPeriod,
     t,
     appLanguage,
+    setAppLanguage,
   } = useSociety();
 
   const currentPeriod = getCurrentPeriod();
@@ -41,7 +43,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   ];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col md:flex-row antialiased">
+    <div
+      className="min-h-screen bg-white text-slate-900 flex flex-col md:flex-row antialiased"
+      dir={appLanguage === 'ur' ? 'rtl' : 'ltr'}
+    >
       {/* =========================================================================
           DESKTOP SIDE RAIL (Visible on md: and up)
          ========================================================================= */}
@@ -57,7 +62,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
             <div className="overflow-hidden">
               <span className="text-[10px] font-bold uppercase tracking-wider text-forest-800 block">
-                Qarz-e-Hasan PWA
+                {t('header.tagline')}
               </span>
               <h1 className="text-sm font-bold text-slate-900 truncate" title={society.name}>
                 {society.name}
@@ -102,8 +107,27 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         </div>
 
         {/* Footer info in desktop sidebar */}
-        <div className="p-3 bg-white border border-slate-200 rounded-2xl text-[11px] space-y-1">
-          <div className="flex items-center justify-between text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+        <div className="p-3 bg-white border border-slate-200 rounded-2xl text-[11px] space-y-2">
+          {/* Language Switcher pill in sidebar */}
+          <div className="flex items-center justify-between text-slate-500 font-semibold text-[11px]">
+            <span className="flex items-center gap-1">
+              <Globe2 size={13} className="text-forest-800" />
+              <span>{t('manage.appLanguage')}</span>
+            </span>
+            <select
+              value={appLanguage}
+              onChange={(e) => setAppLanguage(e.target.value as any)}
+              className="bg-slate-50 border border-slate-200 text-slate-800 text-[11px] font-bold rounded-lg px-2 py-0.5 focus:outline-none"
+            >
+              {APP_LANGUAGES.map((l) => (
+                <option key={l.key} value={l.key}>
+                  {l.flag} {l.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
             <span>UPI ID</span>
             <button
               type="button"
@@ -113,7 +137,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               {t('manage.showQr')}
             </button>
           </div>
-          <div className="font-mono text-slate-700 truncate" title={society.upi_id}>
+          <div className="font-mono text-slate-700 truncate text-[11px]" title={society.upi_id}>
             {society.upi_id}
           </div>
         </div>
@@ -124,14 +148,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
          ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           {/* Left: Mobile Title / Active Screen Title + Back Button */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {activeTab !== 'home' ? (
               <button
                 type="button"
                 onClick={() => navigateToTab('home')}
-                className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center gap-1"
+                className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center gap-1 shrink-0"
                 aria-label="Back to Home"
                 title="Back to Home"
               >
@@ -139,15 +163,15 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 <span className="text-xs font-semibold hidden sm:inline">{t('header.home')}</span>
               </button>
             ) : (
-              <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center">
+              <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center shrink-0">
                 <ShieldCheck size={18} />
               </div>
             )}
-            <div>
-              <span className="text-[10px] font-bold text-forest-800 uppercase tracking-wider block leading-none">
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold text-forest-800 uppercase tracking-wider block leading-none truncate">
                 {society.name}
               </span>
-              <span className="text-sm font-extrabold text-slate-900 capitalize">
+              <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
                 {activeTab === 'home'
                   ? t('nav.home')
                   : activeTab === 'members'
@@ -159,8 +183,29 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
           </div>
 
-          {/* Right: Period Selector & Quick QR */}
-          <div className="flex items-center gap-2">
+          {/* Right: Quick Language Switcher, Period Selector & Quick QR */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Quick App Language Selector */}
+            <div className="relative">
+              <select
+                value={appLanguage}
+                onChange={(e) => setAppLanguage(e.target.value as any)}
+                className="appearance-none bg-emerald-50 border border-emerald-300 text-forest-900 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-forest-800 shadow-2xs cursor-pointer hover:bg-emerald-100 transition-colors"
+                aria-label="Application Language"
+                title="Application Language / زبان منتخب کریں / भाषा बदलें"
+              >
+                {APP_LANGUAGES.map((lang) => (
+                  <option key={lang.key} value={lang.key}>
+                    {lang.flag} {lang.label}
+                  </option>
+                ))}
+              </select>
+              <Globe2
+                size={12}
+                className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-forest-800"
+              />
+            </div>
+
             {/* Period selector */}
             <div className="relative">
               <select
@@ -170,10 +215,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   setSelectedPeriod({
                     year: y,
                     month: m,
-                    monthName: getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en'),
+                    monthName: getLocalizedMonthName(m, appLanguage),
                   });
                 }}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 pr-7 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800"
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800"
               >
                 {[0, -1, -2, -3].map((offset) => {
                   const d = new Date();
@@ -182,14 +227,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   const m = d.getMonth() + 1;
                   return (
                     <option key={`${y}-${m}`} value={`${y}-${m}`}>
-                      {getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en')} {y}
+                      {getLocalizedMonthName(m, appLanguage)} {y}
                     </option>
                   );
                 })}
               </select>
               <ChevronDown
-                size={14}
-                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
+                size={13}
+                className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
             </div>
 
@@ -201,7 +246,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               title="Show Society UPI QR Code"
               aria-label="Show QR Code"
             >
-              <QrCode size={18} />
+              <QrCode size={17} />
             </button>
           </div>
         </header>

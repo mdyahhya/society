@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { formatINR, formatDate, getMonthName } from '../../utils/formatters';
+import { getLocalizedMonthName } from '../../i18n/translations';
 
 export const HomeView: React.FC = () => {
   const {
@@ -56,7 +57,7 @@ export const HomeView: React.FC = () => {
         memberName: m ? m.name : 'Member',
         amount: c.amount,
         date: c.payment_date,
-        detail: `Monthly Share (${getMonthName(c.period_month)})`,
+        detail: `${t('home.monthlyShare', 'Monthly Share')} (${getLocalizedMonthName(c.period_month, appLanguage)})`,
       });
     });
 
@@ -68,7 +69,7 @@ export const HomeView: React.FC = () => {
         memberName: m ? m.name : 'Borrower',
         amount: r.amount,
         date: r.repayment_date,
-        detail: 'Qarz-e-Hasan Repayment',
+        detail: t('home.loanRepayment', 'Loan Payment'),
       });
     });
 
@@ -80,12 +81,12 @@ export const HomeView: React.FC = () => {
         memberName: m ? m.name : 'Borrower',
         amount: l.principal_amount,
         date: l.disbursed_date,
-        detail: 'Loan Disbursed',
+        detail: t('home.loanDisbursed', 'Loan Given'),
       });
     });
 
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-  }, [contributions, repayments, loans, members]);
+  }, [contributions, repayments, loans, members, appLanguage]);
 
   return (
     <div className="space-y-6 pb-20 md:pb-6">
@@ -130,19 +131,19 @@ export const HomeView: React.FC = () => {
         {/* Financial Flow Breakdown */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4 border-t border-slate-100 text-xs">
           <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
-            <span className="text-slate-500 block text-[11px] font-medium">Opening Pool</span>
+            <span className="text-slate-500 block text-[11px] font-medium">{t('home.openingPool', 'Starting Balance')}</span>
             <span className="font-bold text-slate-800">{formatINR(poolMetrics.openingBalance)}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
-            <span className="text-slate-500 block text-[11px] font-medium">Total Collected</span>
+            <span className="text-slate-500 block text-[11px] font-medium">{t('home.totalCollected', 'Total Shares Collected')}</span>
             <span className="font-bold text-emerald-800">+{formatINR(poolMetrics.totalContributions)}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
-            <span className="text-slate-500 block text-[11px] font-medium">Loans Disbursed</span>
+            <span className="text-slate-500 block text-[11px] font-medium">{t('home.loansDisbursed', 'Loans Given')}</span>
             <span className="font-bold text-rose-800">-{formatINR(poolMetrics.totalDisbursedLoans)}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
-            <span className="text-slate-500 block text-[11px] font-medium">Repayments Recovered</span>
+            <span className="text-slate-500 block text-[11px] font-medium">{t('home.repaymentsRecovered', 'Loan Money Returned')}</span>
             <span className="font-bold text-emerald-800">+{formatINR(poolMetrics.totalRepayments)}</span>
           </div>
         </div>
@@ -154,11 +155,11 @@ export const HomeView: React.FC = () => {
           <div className="flex items-center gap-2">
             <Calendar size={18} className="text-forest-800" />
             <h3 className="text-sm font-bold text-slate-900">
-              {monthMetrics.monthName} {monthMetrics.year} Collection
+              {getLocalizedMonthName(monthMetrics.month, appLanguage)} {monthMetrics.year} {t('home.monthlyCollection', 'Collection')}
             </h3>
           </div>
           <span className="text-xs font-bold text-forest-800 bg-forest-50 px-2.5 py-1 rounded-full border border-forest-200">
-            {monthMetrics.collectionPercentage}% Collected
+            {monthMetrics.collectionPercentage}% {t('home.collected', 'Collected')}
           </span>
         </div>
 
@@ -172,15 +173,15 @@ export const HomeView: React.FC = () => {
 
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
           <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-slate-500 block text-[11px]">Collected</span>
+            <span className="text-slate-500 block text-[11px]">{t('home.collected', 'Collected')}</span>
             <span className="font-bold text-slate-900">{formatINR(monthMetrics.collectedAmount)}</span>
           </div>
           <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-slate-500 block text-[11px]">Pending Due</span>
+            <span className="text-slate-500 block text-[11px]">{t('home.pendingDue', 'Pending Due')}</span>
             <span className="font-bold text-amber-700">{formatINR(monthMetrics.pendingAmount)}</span>
           </div>
           <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-slate-500 block text-[11px]">Paid Members</span>
+            <span className="text-slate-500 block text-[11px]">{t('home.paidMembers', 'Paid Members')}</span>
             <span className="font-bold text-slate-900">
               {monthMetrics.paidMembersCount} / {monthMetrics.paidMembersCount + monthMetrics.unpaidMembersCount}
             </span>
@@ -203,7 +204,7 @@ export const HomeView: React.FC = () => {
               onClick={() => setActiveTab('loans')}
               className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5"
             >
-              <span>View All</span>
+              <span>{t('home.viewAll', 'View All')}</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -219,9 +220,9 @@ export const HomeView: React.FC = () => {
                     <span className="text-sm font-bold text-slate-900">{item.member.name}</span>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                       {item.type === 'both'
-                        ? 'Share + Loan Due'
+                        ? t('home.dueBoth', 'Share + Loan Due')
                         : item.type === 'loan'
-                        ? 'Loan Installment Due'
+                        ? t('home.dueLoan', 'Loan Installment Due')
                         : `${item.contributionMonthsOverdue} ${t('home.monthsOverdue')}`}
                     </span>
                   </div>
@@ -262,8 +263,8 @@ export const HomeView: React.FC = () => {
       {/* 4. Recent Transactions Stream */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-3.5">
-          <h3 className="text-sm font-bold text-slate-900">Recent Transactions</h3>
-          <span className="text-xs text-slate-500">Live Pool Records</span>
+          <h3 className="text-sm font-bold text-slate-900">{t('home.recentTxns', 'Recent Activity')}</h3>
+          <span className="text-xs text-slate-500">{t('home.liveRecords', 'Live Fund Records')}</span>
         </div>
 
         <div className="divide-y divide-slate-100">

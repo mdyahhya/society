@@ -123,32 +123,34 @@ export const ManageView: React.FC = () => {
       </div>
 
       {/* 2. Application Language Setting Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-9 h-9 rounded-xl bg-forest-50 text-forest-800 flex items-center justify-center">
-            <Globe2 size={18} />
+      <div className="bg-emerald-50/60 border-2 border-emerald-400/80 rounded-3xl p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center gap-2.5 mb-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-forest-800 text-white flex items-center justify-center shadow-sm">
+            <Globe2 size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">{t('manage.appLanguage')}</h3>
-            <p className="text-xs text-slate-500">{t('manage.appLanguageDesc')}</p>
+            <h3 className="text-base font-extrabold text-slate-900">{t('manage.appLanguage')}</h3>
+            <p className="text-xs text-slate-600 font-medium">{t('manage.appLanguageDesc')}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
           {APP_LANGUAGES.map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => setAppLanguage(item.key)}
-              className={`p-3 rounded-2xl border text-center transition-all ${
+              className={`p-3.5 rounded-2xl border text-center transition-all ${
                 appLanguage === item.key
-                  ? 'bg-forest-50/90 border-forest-800 text-forest-950 ring-2 ring-forest-800/20 font-bold shadow-2xs'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-forest-800 border-forest-800 text-white ring-2 ring-forest-800/30 font-bold shadow-md scale-[1.02]'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
               }`}
             >
-              <span className="text-xl block mb-1">{item.flag}</span>
+              <span className="text-2xl block mb-1">{item.flag}</span>
               <span className="text-sm font-bold block">{item.label}</span>
-              <span className="text-[11px] text-slate-500 block mt-0.5">{item.subLabel}</span>
+              <span className={`text-[11px] block mt-0.5 ${appLanguage === item.key ? 'text-emerald-100' : 'text-slate-500'}`}>
+                {item.subLabel}
+              </span>
             </button>
           ))}
         </div>

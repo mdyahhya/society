@@ -275,7 +275,7 @@ export const CreateActionModal: React.FC = () => {
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
-                      {getLocalizedMonthName(m, appLanguage === 'hi' ? 'hi' : appLanguage === 'mr' ? 'mr' : 'en')}
+                      {getLocalizedMonthName(m, appLanguage)}
                     </option>
                   ))}
                 </select>
@@ -574,7 +574,7 @@ export const CreateActionModal: React.FC = () => {
                           memberName: m.name,
                           memberPhone: m.phone,
                           societyName: society.name,
-                          monthName: getMonthName(getCurrentPeriod().month),
+                          monthName: getLocalizedMonthName(getCurrentPeriod().month, appLanguage),
                           monthNumber: getCurrentPeriod().month,
                           monthlyShareDue: m.monthly_share,
                           loanDue: loanDue > 0 ? loanDue : undefined,
