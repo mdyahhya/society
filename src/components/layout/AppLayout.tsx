@@ -121,7 +121,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             >
               {APP_LANGUAGES.map((l) => (
                 <option key={l.key} value={l.key}>
-                  {l.flag} {l.label}
+                  {l.label}
                 </option>
               ))}
             </select>
@@ -185,7 +185,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
           {/* Right: Quick Language Switcher, Period Selector & Quick QR */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick App Language Selector */}
+            {/* Quick App Language Selector (Text Only, No Flags) */}
             <div className="relative">
               <select
                 value={appLanguage}
@@ -196,7 +196,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               >
                 {APP_LANGUAGES.map((lang) => (
                   <option key={lang.key} value={lang.key}>
-                    {lang.flag} {lang.label}
+                    {lang.label}
                   </option>
                 ))}
               </select>
@@ -206,7 +206,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               />
             </div>
 
-            {/* Period selector */}
+            {/* Period selector - All months according to year */}
             <div className="relative">
               <select
                 value={`${selectedPeriod.year}-${selectedPeriod.month}`}
@@ -218,19 +218,22 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                     monthName: getLocalizedMonthName(m, appLanguage),
                   });
                 }}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800"
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800 cursor-pointer"
+                title="Select Month & Year"
               >
-                {[0, -1, -2, -3].map((offset) => {
-                  const d = new Date();
-                  d.setMonth(d.getMonth() + offset);
-                  const y = d.getFullYear();
-                  const m = d.getMonth() + 1;
-                  return (
-                    <option key={`${y}-${m}`} value={`${y}-${m}`}>
-                      {getLocalizedMonthName(m, appLanguage)} {y}
-                    </option>
-                  );
-                })}
+                {Array.from(
+                  new Set([new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() - 1, new Date().getFullYear() - 2, 2024, 2025, 2026])
+                )
+                  .sort((a, b) => b - a)
+                  .map((year) => (
+                    <optgroup key={year} label={`${year}`}>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <option key={`${year}-${m}`} value={`${year}-${m}`}>
+                          {getLocalizedMonthName(m, appLanguage)} {year}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
               </select>
               <ChevronDown
                 size={13}

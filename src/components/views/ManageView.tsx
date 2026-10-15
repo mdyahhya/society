@@ -146,8 +146,7 @@ export const ManageView: React.FC = () => {
                   : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
               }`}
             >
-              <span className="text-2xl block mb-1">{item.flag}</span>
-              <span className="text-sm font-bold block">{item.label}</span>
+              <span className="text-base font-bold block">{item.label}</span>
               <span className={`text-[11px] block mt-0.5 ${appLanguage === item.key ? 'text-emerald-100' : 'text-slate-500'}`}>
                 {item.subLabel}
               </span>

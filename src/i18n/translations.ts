@@ -1,10 +1,10 @@
 export type AppLanguage = 'en' | 'ur' | 'hi' | 'mr';
 
-export const APP_LANGUAGES: { key: AppLanguage; label: string; subLabel: string; flag: string }[] = [
-  { key: 'en', label: 'English', subLabel: 'Simple English', flag: '🇬🇧' },
-  { key: 'ur', label: 'اردو', subLabel: 'Urdu', flag: '🇵🇰' },
-  { key: 'hi', label: 'हिंदी', subLabel: 'Hindi', flag: '🇮🇳' },
-  { key: 'mr', label: 'मराठी', subLabel: 'Marathi', flag: '🇮🇳' },
+export const APP_LANGUAGES: { key: AppLanguage; label: string; subLabel: string }[] = [
+  { key: 'en', label: 'English', subLabel: 'Simple English' },
+  { key: 'ur', label: 'اردو', subLabel: 'Urdu' },
+  { key: 'hi', label: 'हिंदी', subLabel: 'Hindi' },
+  { key: 'mr', label: 'मराठी', subLabel: 'Marathi' },
 ];
 
 export const translations = {
