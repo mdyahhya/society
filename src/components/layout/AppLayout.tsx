@@ -15,6 +15,8 @@ import {
   BellRing,
   Download,
   User,
+  UserCheck,
+  RefreshCw,
   Menu,
 } from 'lucide-react';
 import { useSociety, NavigationTab } from '../../context/SocietyContext';
@@ -39,6 +41,8 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     isPushSubscribed,
     subscribeToPushNotifications,
     triggerPwaInstall,
+    isRefreshing,
+    refreshData,
   } = useSociety();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -116,7 +120,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                     : 'bg-emerald-100 text-emerald-800'
                 }`}
               >
-                {currentUser?.role === 'admin' ? '👑' : <User size={15} />}
+                {currentUser?.role === 'admin' ? <ShieldCheck size={16} /> : <User size={15} />}
               </div>
               <div className="overflow-hidden">
                 <p className="font-bold text-slate-900 truncate text-xs group-hover:text-emerald-800 transition-colors">
@@ -265,45 +269,46 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               </button>
             )}
 
-            {activeTab === 'home' ? (
-              <div
-                onClick={() => navigateToTab('home')}
-                className="min-w-0 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+            <div className="min-w-0">
+              <span
+                className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate"
+                title={localizedSocietyName}
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 shadow-xs">
-                  {appLanguage === 'mr' ? 'अ' : 'A'}
-                </div>
-                <h1
-                  className="text-xs sm:text-sm md:text-base font-bold text-slate-900 truncate tracking-tight whitespace-nowrap"
-                  title={localizedSocietyName}
-                >
-                  {localizedSocietyName}
-                </h1>
-              </div>
-            ) : (
-              <div className="min-w-0">
-                <span
-                  className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate"
-                  title={localizedSocietyName}
-                >
-                  {localizedSocietyName}
-                </span>
-                <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
-                  {activeTab === 'members'
-                    ? t('nav.members')
-                    : activeTab === 'register'
-                    ? t('nav.register', 'Register')
-                    : activeTab === 'loans'
-                    ? t('nav.loans')
-                    : t('nav.manage')}
-                </span>
-              </div>
-            )}
+                {localizedSocietyName}
+              </span>
+              <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
+                {activeTab === 'home'
+                  ? t('nav.home', 'Home')
+                  : activeTab === 'members'
+                  ? t('nav.members', 'Members')
+                  : activeTab === 'register'
+                  ? t('nav.register', 'Register')
+                  : activeTab === 'loans'
+                  ? t('nav.loans', 'Loans')
+                  : t('nav.manage', 'Settings')}
+              </span>
+            </div>
           </div>
 
           {/* Right: User Profile Button, Push Bell, Language & Period Selectors */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Top Header User Profile Button (Click opens My Profile with history) */}
+            {/* Refresh Button from Supabase (Available across all screens) */}
+            <button
+              type="button"
+              onClick={() => refreshData()}
+              disabled={isRefreshing}
+              className={`p-1.5 rounded-xl border transition-colors ${
+                isRefreshing
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title={appLanguage === 'mr' ? 'क्लाउडवरून ताजी माहिती आणा (Refresh Data)' : 'Refresh fresh data from Supabase'}
+              aria-label="Refresh Data"
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+
+            {/* Top Header User Profile / Secretary Login Button */}
             <button
               type="button"
               onClick={handleProfileClick}
@@ -314,11 +319,23 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                   : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
               }`}
-              title={appLanguage === 'mr' ? 'माझे प्रोफाइल व भरणा इतिहास पहा' : 'View Profile & Payment History'}
+              title={appLanguage === 'mr' ? 'माझे प्रोफाइल / लॉगिन' : 'Profile / Login'}
             >
-              <span>{currentUser?.role === 'admin' ? '👑' : <User size={13} className="inline mr-0.5" />}</span>
-              <span className="truncate max-w-[75px] sm:max-w-[140px]">
-                {currentUser ? getLocalizedEntityName(currentUser, appLanguage) : (appLanguage === 'mr' ? 'लॉगिन' : 'Login')}
+              <span>
+                {currentUser?.role === 'admin' ? (
+                  <ShieldCheck size={14} className="text-amber-800 inline shrink-0" />
+                ) : currentUser ? (
+                  <UserCheck size={13} className="text-emerald-800 inline shrink-0" />
+                ) : (
+                  <ShieldCheck size={13} className="text-slate-600 inline shrink-0" />
+                )}
+              </span>
+              <span className="truncate max-w-[95px] sm:max-w-[140px]">
+                {currentUser?.role === 'admin'
+                  ? (appLanguage === 'mr' ? 'सचिव (Admin)' : 'Secretary (Admin)')
+                  : currentUser
+                  ? getLocalizedEntityName(currentUser, appLanguage)
+                  : (appLanguage === 'mr' ? 'सचिव लॉगिन' : 'Secretary Login')}
               </span>
             </button>
 

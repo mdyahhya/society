@@ -216,23 +216,26 @@ export const LoginModal: React.FC = () => {
             <button
               type="button"
               onClick={handlePreFillAdmin}
-              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
+              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-1"
             >
-              👑 {appLanguage === 'mr' ? 'ॲडमिन (admin / admin321)' : 'Admin (admin / admin321)'}
+              <ShieldCheck size={13} className="text-amber-800" />
+              <span>{appLanguage === 'mr' ? 'ॲडमिन (admin / admin321)' : 'Admin (admin / admin321)'}</span>
             </button>
             <button
               type="button"
               onClick={() => handlePreFillMember(11)}
-              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
+              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-1"
             >
-              👤 {appLanguage === 'mr' ? 'सभासद #11 (इम्रान बेंगलोरे / 1234)' : 'Member #11 (Imran Bengalore / 1234)'}
+              <User size={13} className="text-emerald-800" />
+              <span>{appLanguage === 'mr' ? 'सभासद #11 (इम्रान बेंगलोरे / 1234)' : 'Member #11 (Imran Bengalore / 1234)'}</span>
             </button>
             <button
               type="button"
               onClick={() => handlePreFillMember(1)}
-              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
+              className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-1"
             >
-              👤 {appLanguage === 'mr' ? 'सभासद #1 (इम्रान सय्यद / 1234)' : 'Member #1 (Imran Sayyad / 1234)'}
+              <User size={13} className="text-emerald-800" />
+              <span>{appLanguage === 'mr' ? 'सभासद #1 (इम्रान सय्यद / 1234)' : 'Member #1 (Imran Sayyad / 1234)'}</span>
             </button>
           </div>
         </div>

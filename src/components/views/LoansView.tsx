@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Clock,
   ArrowRight,
+  RefreshCw,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { formatINR, formatDate, getMonthName } from '../../utils/formatters';
@@ -24,6 +25,8 @@ export const LoansView: React.FC = () => {
     openWhatsAppModal,
     society,
     selectedPeriod,
+    isRefreshing,
+    refreshData,
     t,
     appLanguage,
   } = useSociety();
@@ -43,14 +46,26 @@ export const LoansView: React.FC = () => {
             {t('loans.subtitle', 'Interest-free loan cycle management & defaulter tracking')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => openCreateModal('loan')}
-          className="px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-        >
-          <PlusCircle size={15} />
-          <span>{t('loans.disburseNewLoan', 'New Loan')}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => refreshData()}
+            disabled={isRefreshing}
+            className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+            title="Refresh Loans from Supabase"
+          >
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-emerald-700' : 'text-slate-600'} />
+            <span>{appLanguage === 'mr' ? 'रिफ्रेश' : 'Refresh'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => openCreateModal('loan')}
+            className="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <PlusCircle size={15} />
+            <span>{t('loans.disburseNewLoan', 'New Loan')}</span>
+          </button>
+        </div>
       </div>
 
       {/* Sub-tab Switcher */}

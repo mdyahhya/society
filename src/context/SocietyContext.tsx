@@ -113,6 +113,10 @@ interface SocietyContextType {
   sendBroadcastPush: (title: string, body: string, url?: string) => Promise<{ success: boolean; message: string }>;
   sendDueReminders: () => Promise<{ count: number }>;
 
+  // Refresh & Supabase Cloud Sync
+  isRefreshing: boolean;
+  refreshData: () => Promise<boolean>;
+
   // Language & i18n
   defaultReminderLang: ReminderLanguage;
   setDefaultReminderLang: (lang: ReminderLanguage) => void;
@@ -212,29 +216,51 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstallPwa, setCanInstallPwa] = useState(false);
   const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Helper to sanitize society name across all data objects
+  const sanitizeLoadedData = (loaded: AppStoreData): AppStoreData => {
+    if (loaded && loaded.society) {
+      if (loaded.society.name) {
+        loaded.society.name = loaded.society.name.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+      }
+      if (loaded.society.name_mr) {
+        loaded.society.name_mr = loaded.society.name_mr.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+      } else {
+        loaded.society.name_mr = 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.';
+      }
+      if (loaded.society.name_en) {
+        loaded.society.name_en = loaded.society.name_en.replace(/Bilasoudi/gi, 'Bilasudi');
+      } else {
+        loaded.society.name_en = 'Al-Badr Bilasudi Co-Op Society, Solapur';
+      }
+      if (loaded.society.address) {
+        loaded.society.address = loaded.society.address.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+      }
+    }
+    return loaded;
+  };
+
+  // Explicit refresh from Supabase / Storage
+  const refreshData = async (): Promise<boolean> => {
+    setIsRefreshing(true);
+    try {
+      const loaded = await storageService.loadData();
+      const sanitized = sanitizeLoadedData(loaded);
+      setData(sanitized);
+      return true;
+    } catch (err) {
+      console.warn('Failed to refresh data:', err);
+      return false;
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Initial load
   useEffect(() => {
     storageService.loadData().then((loaded) => {
-      if (loaded.society) {
-        if (loaded.society.name) {
-          loaded.society.name = loaded.society.name.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
-        }
-        if (loaded.society.name_mr) {
-          loaded.society.name_mr = loaded.society.name_mr.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
-        } else {
-          loaded.society.name_mr = 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.';
-        }
-        if (loaded.society.name_en) {
-          loaded.society.name_en = loaded.society.name_en.replace(/Bilasoudi/gi, 'Bilasudi');
-        } else {
-          loaded.society.name_en = 'Al-Badr Bilasudi Co-Op Society, Solapur';
-        }
-        if (loaded.society.address) {
-          loaded.society.address = loaded.society.address.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
-        }
-      }
-      setData(loaded);
+      setData(sanitizeLoadedData(loaded));
     });
     pushNotificationService.isSubscribed().then((sub) => setIsPushSubscribed(sub));
 
@@ -247,6 +273,15 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
+
+  // Auto-refresh fresh data every time tab/page is opened
+  useEffect(() => {
+    if (data) {
+      storageService.loadData().then((loaded) => {
+        setData(sanitizeLoadedData(loaded));
+      }).catch(() => {});
+    }
+  }, [activeTab]);
 
   const persist = (updated: AppStoreData) => {
     setData(updated);
@@ -942,7 +977,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const targetMember = data.members.find((m) => m.id === contData.member_id);
     const memberName = targetMember ? targetMember.name : 'सभासद';
     pushNotificationService.sendPush({
-      title: 'अल-बदर सोसायटी: वर्गणी जमा पावती ✅',
+      title: 'अल-बदर सोसायटी: वर्गणी जमा पावती',
       body: `${memberName} यांची ₹${contData.amount} मासिक वर्गणी यशस्वीरीत्या जमा झाली आहे.`,
       url: '/',
       target: targetMember ? `acc-${targetMember.account_no}` : 'all',
@@ -976,7 +1011,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const targetMember = data.members.find((m) => m.id === loanData.member_id);
     const memberName = targetMember ? targetMember.name : 'सभासद';
     pushNotificationService.sendPush({
-      title: 'अल-बदर सोसायटी: कर्ज वाटप मंजूर 🤝',
+      title: 'अल-बदर सोसायटी: कर्ज वाटप मंजूर',
       body: `${memberName} यांना ₹${loanData.principal_amount.toLocaleString('en-IN')} चे बिनव्याजी कर्ज मंजूर करण्यात आले आहे.`,
       url: '/',
       target: targetMember ? `acc-${targetMember.account_no}` : 'all',
@@ -1023,7 +1058,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const targetMember = data.members.find((m) => m.id === repData.member_id);
     const memberName = targetMember ? targetMember.name : 'सभासद';
     pushNotificationService.sendPush({
-      title: 'अल-बदर सोसायटी: कर्ज हप्ता पावती ✅',
+      title: 'अल-बदर सोसायटी: कर्ज हप्ता पावती',
       body: `${memberName} यांचा ₹${repData.amount} चा कर्जाचा हप्ता जमा झाला. बाकी कर्ज: ₹${remainingAfter.toLocaleString('en-IN')}.`,
       url: '/',
       target: targetMember ? `acc-${targetMember.account_no}` : 'all',
@@ -1151,6 +1186,8 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         subscribeToPushNotifications,
         sendBroadcastPush,
         sendDueReminders,
+        isRefreshing,
+        refreshData,
         defaultReminderLang,
         setDefaultReminderLang,
         appLanguage,

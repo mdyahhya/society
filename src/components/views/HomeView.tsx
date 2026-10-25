@@ -17,10 +17,11 @@ import {
   BookOpen,
   Bell,
   CheckCircle2,
+  RefreshCw,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { formatINR, formatDate } from '../../utils/formatters';
-import { getLocalizedMonthName } from '../../i18n/translations';
+import { getLocalizedMonthName, getLocalizedSocietyName } from '../../i18n/translations';
 
 export const HomeView: React.FC = () => {
   const {
@@ -39,6 +40,8 @@ export const HomeView: React.FC = () => {
     navigateToTab,
     currentUser,
     sendDueReminders,
+    isRefreshing,
+    refreshData,
     t,
     appLanguage,
   } = useSociety();
@@ -202,6 +205,35 @@ export const HomeView: React.FC = () => {
         </div>
       )}
 
+      {/* Society Full Name Banner (Directly Above Available Cash Balance) */}
+      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 text-white rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center font-extrabold text-base sm:text-lg text-emerald-200 shrink-0">
+            {appLanguage === 'mr' ? 'अ' : 'A'}
+          </div>
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs font-semibold text-emerald-300 uppercase tracking-wider block leading-tight truncate">
+              {appLanguage === 'mr' ? 'नोंदणीकृत सहकारी संस्था, सोलापूर' : 'Registered Co-Op Society, Solapur'}
+            </span>
+            <h1 className="text-sm sm:text-lg md:text-xl font-extrabold text-white tracking-tight truncate" title={getLocalizedSocietyName(society, appLanguage)}>
+              {getLocalizedSocietyName(society, appLanguage)}
+            </h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <button
+            type="button"
+            onClick={() => refreshData()}
+            disabled={isRefreshing}
+            className="py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15"
+            title="Refresh Data from Supabase"
+          >
+            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
+            <span>{appLanguage === 'mr' ? 'रिफ्रेश' : 'Refresh'}</span>
+          </button>
+        </div>
+      </div>
+
       {/* 1. Pool Balance Hero Card */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -351,11 +383,11 @@ export const HomeView: React.FC = () => {
                       : 'Sending...'
                     : alertSuccess
                     ? appLanguage === 'mr'
-                      ? 'सूचना पाठवली! ✅'
-                      : 'Sent! ✅'
+                      ? 'सूचना पाठवली!'
+                      : 'Sent Successfully!'
                     : appLanguage === 'mr'
-                    ? '📢 थकीत आठवण सूचना पाठवा'
-                    : '📢 Send Due Reminders'}
+                    ? 'थकीत आठवण सूचना पाठवा'
+                    : 'Send Due Reminders'}
                 </span>
               </button>
 

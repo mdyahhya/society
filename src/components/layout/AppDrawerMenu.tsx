@@ -119,8 +119,8 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
             className="p-3 bg-gradient-to-r from-emerald-800 to-emerald-950 text-white rounded-2xl shadow-sm cursor-pointer hover:opacity-95 transition-all flex items-center justify-between"
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-base shrink-0 border border-white/30">
-                {currentUser?.role === 'admin' ? '👑' : <User size={18} />}
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-base shrink-0 border border-white/30 text-amber-300">
+                {currentUser?.role === 'admin' ? <ShieldCheck size={20} /> : <User size={18} />}
               </div>
               <div className="overflow-hidden">
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-700/60 text-emerald-200 uppercase tracking-wider">

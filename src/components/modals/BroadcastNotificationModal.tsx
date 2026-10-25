@@ -76,7 +76,7 @@ export const BroadcastNotificationModal: React.FC = () => {
               }
               className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
             >
-              📌 वर्गणी आठवण
+              वर्गणी आठवण
             </button>
             <button
               type="button"
@@ -88,7 +88,7 @@ export const BroadcastNotificationModal: React.FC = () => {
               }
               className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
             >
-              📖 रजिस्टर अद्ययावत
+              रजिस्टर अद्ययावत
             </button>
             <button
               type="button"
@@ -100,7 +100,7 @@ export const BroadcastNotificationModal: React.FC = () => {
               }
               className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"
             >
-              📢 सभासद बैठक
+              सभासद बैठक
             </button>
           </div>
         </div>

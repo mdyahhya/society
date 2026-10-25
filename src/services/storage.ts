@@ -30,11 +30,12 @@ export const storageService = {
     // 1. If Supabase is configured, attempt remote fetch
     if (isSupabaseConfigured() && supabase) {
       try {
-        const [socRes, memRes, ledRes, authRes] = await Promise.all([
+        const [socRes, memRes, ledRes, authRes, loanRes] = await Promise.all([
           supabase.from('society_profile').select('*').limit(1).maybeSingle(),
           supabase.from('society_members').select('*').order('account_no'),
           supabase.from('monthly_ledgers').select('*, ledger_entries(*)').order('period_year', { ascending: false }),
           supabase.from('app_auth_users').select('*').eq('role', 'admin').limit(1).maybeSingle(),
+          supabase.from('society_loans').select('*'),
         ]);
 
         if (socRes.data && memRes.data && memRes.data.length > 0) {
@@ -102,12 +103,73 @@ export const storageService = {
             updated_at: socRes.data.updated_at || new Date().toISOString(),
           };
 
+          // Dynamically map loans from society_loans if available
+          const remoteLoans: Loan[] = (loanRes.data && loanRes.data.length > 0)
+            ? loanRes.data.map((l: any, idx: number) => {
+                const mem = members.find((m) => m.account_no === l.account_no);
+                return {
+                  id: l.id || `loan-${l.account_no}`,
+                  society_id: 'soc-albadr-01',
+                  member_id: mem?.id || `mem-${l.account_no}`,
+                  loan_no: `L-2024-${String(idx + 1).padStart(3, '0')}`,
+                  principal_amount: Number(l.principal_amount),
+                  remaining_balance: Number(l.remaining_balance),
+                  monthly_installment: Number(l.monthly_installment),
+                  duration_months: Math.ceil(Number(l.principal_amount) / (Number(l.monthly_installment) || 4000)),
+                  disbursed_date: l.disbursed_period || '2024-10-01',
+                  purpose: 'Interest-free member loan',
+                  status: (l.status || (Number(l.remaining_balance) > 0 ? 'active' : 'closed')) as any,
+                  created_at: l.created_at || new Date().toISOString(),
+                  updated_at: l.updated_at || new Date().toISOString(),
+                };
+              })
+            : SEED_LOANS;
+
+          // Dynamically synthesize contributions and repayments from remoteLedgers
+          const remoteContributions: Contribution[] = [];
+          const remoteRepayments: LoanRepayment[] = [];
+
+          if (remoteLedgers.length > 0) {
+            remoteLedgers.forEach((ledger) => {
+              (ledger.entries || []).forEach((entry) => {
+                const mem = members.find((m) => m.account_no === entry.account_no);
+                if (!mem) return;
+                if (entry.is_paid && entry.monthly_share > 0) {
+                  remoteContributions.push({
+                    id: `c-${ledger.period_year}-${ledger.period_month}-${entry.account_no}`,
+                    society_id: 'soc-albadr-01',
+                    member_id: mem.id,
+                    amount: entry.monthly_share,
+                    period_month: ledger.period_month,
+                    period_year: ledger.period_year,
+                    payment_date: `${ledger.period_year}-${String(ledger.period_month).padStart(2, '0')}-05`,
+                    payment_method: 'cash',
+                    created_at: new Date().toISOString(),
+                  });
+                }
+                if (entry.is_paid && entry.loan_installment > 0) {
+                  const loan = remoteLoans.find((l) => l.member_id === mem.id);
+                  remoteRepayments.push({
+                    id: `r-${ledger.period_year}-${ledger.period_month}-${entry.account_no}`,
+                    society_id: 'soc-albadr-01',
+                    loan_id: loan?.id || `loan-${entry.account_no}`,
+                    member_id: mem.id,
+                    amount: entry.loan_installment,
+                    repayment_date: `${ledger.period_year}-${String(ledger.period_month).padStart(2, '0')}-05`,
+                    payment_method: 'cash',
+                    created_at: new Date().toISOString(),
+                  });
+                }
+              });
+            });
+          }
+
           const store: AppStoreData = {
             society: remoteSociety,
             members: members,
-            contributions: SEED_CONTRIBUTIONS,
-            loans: SEED_LOANS,
-            repayments: SEED_REPAYMENTS,
+            contributions: remoteContributions.length > 0 ? remoteContributions : SEED_CONTRIBUTIONS,
+            loans: remoteLoans,
+            repayments: remoteRepayments.length > 0 ? remoteRepayments : SEED_REPAYMENTS,
             ledgers: remoteLedgers.length > 0 ? remoteLedgers : [SEED_OCTOBER_LEDGER],
             adminPassword: authRes.data?.password || 'admin321',
           };

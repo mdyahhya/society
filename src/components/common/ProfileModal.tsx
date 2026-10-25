@@ -98,8 +98,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         {/* Profile Card Header */}
         <div className="p-4 bg-gradient-to-r from-emerald-800 to-emerald-950 text-white rounded-2xl shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg border border-white/30">
-              {currentUser.role === 'admin' ? '👑' : <User size={22} />}
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg border border-white/30 text-amber-300">
+              {currentUser.role === 'admin' ? <ShieldCheck size={22} /> : <User size={22} />}
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -292,7 +292,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       +{formatINR(item.amount)}
                     </span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-bold">
-                      {t('profile.paid', 'Paid')} ✅
+                      {t('profile.paid', 'Paid')}
                     </span>
                   </div>
                 </div>

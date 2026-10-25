@@ -14,6 +14,7 @@ import {
   Edit2,
   KeyRound,
   ShieldAlert,
+  RefreshCw,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { Member } from '../../types';
@@ -44,6 +45,8 @@ export const MembersView: React.FC = () => {
     openMemberDetail,
     isAdmin,
     openPasswordModal,
+    isRefreshing,
+    refreshData,
     t,
     appLanguage,
   } = useSociety();
@@ -113,16 +116,29 @@ export const MembersView: React.FC = () => {
           </p>
         </div>
 
-        {isAdmin && (
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             type="button"
-            onClick={handleOpenAdd}
-            className="py-2 px-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+            onClick={() => refreshData()}
+            disabled={isRefreshing}
+            className="py-2 px-3 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+            title="Refresh Members from Supabase"
           >
-            <UserPlus size={15} />
-            <span>{appLanguage === 'mr' ? 'नवीन सभासद जोडा' : 'Add New Member'}</span>
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-emerald-700' : 'text-slate-600'} />
+            <span>{appLanguage === 'mr' ? 'रिफ्रेश' : 'Refresh'}</span>
           </button>
-        )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="py-2 px-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <UserPlus size={15} />
+              <span>{appLanguage === 'mr' ? 'नवीन सभासद जोडा' : 'Add New Member'}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search and Filters */}

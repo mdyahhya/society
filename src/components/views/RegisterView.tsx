@@ -16,6 +16,7 @@ import {
   ChevronRight,
   UserCheck,
   Save,
+  RefreshCw,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { storageService } from '../../services/storage';
@@ -38,6 +39,8 @@ export const RegisterView: React.FC = () => {
     currentUser,
     openPasswordModal,
     members,
+    isRefreshing,
+    refreshData,
     appLanguage,
     t,
   } = useSociety();
@@ -287,6 +290,18 @@ export const RegisterView: React.FC = () => {
           </div>
 
           {/* ALWAYS-ON TOP HEADER SAVE BUTTON */}
+          {/* Refresh from Supabase button */}
+          <button
+            type="button"
+            onClick={() => refreshData()}
+            disabled={isRefreshing}
+            className="py-2 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+            title="Refresh Ledger from Supabase"
+          >
+            <RefreshCw size={14} className={`text-emerald-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{appLanguage === 'mr' ? 'रिफ्रेश' : 'Refresh'}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleSaveRegister}
@@ -302,7 +317,7 @@ export const RegisterView: React.FC = () => {
             ) : (
               <>
                 <Save size={14} className="text-white" />
-                <span>💾 {t('register.saveChanges')}</span>
+                <span>{t('register.saveChanges')}</span>
               </>
             )}
           </button>
@@ -328,7 +343,7 @@ export const RegisterView: React.FC = () => {
             title={t('register.printA4')}
           >
             <Printer size={15} />
-            <span>🖨️ {t('register.printA4')}</span>
+            <span>{t('register.printA4')}</span>
           </button>
         </div>
       </div>
@@ -732,7 +747,17 @@ export const RegisterView: React.FC = () => {
                       : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
                   }`}
                 >
-                  {editIsPaid ? `✅ ${t('register.paid')}` : `⏳ ${t('register.unpaid')}`}
+                  {editIsPaid ? (
+                    <span className="flex items-center justify-center gap-1">
+                      <Check size={14} />
+                      <span>{t('register.paid')}</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-1">
+                      <Clock size={14} />
+                      <span>{t('register.unpaid')}</span>
+                    </span>
+                  )}
                 </button>
               </div>
 

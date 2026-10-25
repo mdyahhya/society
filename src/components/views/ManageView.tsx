@@ -19,11 +19,11 @@ import {
   Send,
   UserCheck,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { formatINR, getMonthName } from '../../utils/formatters';
-import { APP_LANGUAGES } from '../../i18n/translations';
 import { QRCodeSVG } from 'qrcode.react';
 
 export const ManageView: React.FC = () => {
@@ -47,6 +47,8 @@ export const ManageView: React.FC = () => {
     isPushSubscribed,
     subscribeToPushNotifications,
     triggerPwaInstall,
+    isRefreshing,
+    refreshData,
     t,
   } = useSociety();
 
@@ -113,7 +115,8 @@ export const ManageView: React.FC = () => {
     const rows = periodContribs
       .map((c) => {
         const m = members.find((mem) => mem.id === c.member_id);
-        return `"${m?.account_no || ''}","${m?.name || ''}","${m?.phone || ''}","${getMonthName(c.period_month)}",${c.period_year},${c.amount},"${c.payment_date}","${c.payment_method}","${c.reference_note || ''}"`;
+        const name = appLanguage === 'mr' ? (m?.name_mr || m?.name || '') : (m?.name_en || m?.name || '');
+        return `"${m?.account_no || ''}","${name}","${m?.phone || ''}","${getMonthName(c.period_month)}",${c.period_year},${c.amount},"${c.payment_date}","${c.payment_method}","${c.reference_note || ''}"`;
       })
       .join('\n');
 
@@ -125,7 +128,8 @@ export const ManageView: React.FC = () => {
     const rows = loans
       .map((l) => {
         const m = members.find((mem) => mem.id === l.member_id);
-        return `"${l.loan_no}","${m?.account_no || ''}","${m?.name || ''}","${m?.phone || ''}",${l.principal_amount},${l.remaining_balance},${l.monthly_installment},"${l.disbursed_date}","${l.status}"`;
+        const name = appLanguage === 'mr' ? (m?.name_mr || m?.name || '') : (m?.name_en || m?.name || '');
+        return `"${l.loan_no}","${m?.account_no || ''}","${name}","${m?.phone || ''}",${l.principal_amount},${l.remaining_balance},${l.monthly_installment},"${l.disbursed_date}","${l.status}"`;
       })
       .join('\n');
 
@@ -135,7 +139,10 @@ export const ManageView: React.FC = () => {
   const exportDefaultersCsv = () => {
     const header = 'Account No,Member Name,Phone,Contribution Overdue,Loan Overdue,Total Due\n';
     const rows = defaulters
-      .map((d) => `"${d.member.account_no}","${d.member.name}","${d.member.phone}",${d.contributionAmountDue},${d.loanOverdueAmount},${d.totalDue}`)
+      .map((d) => {
+        const name = appLanguage === 'mr' ? (d.member.name_mr || d.member.name) : (d.member.name_en || d.member.name);
+        return `"${d.member.account_no}","${name}","${d.member.phone}",${d.contributionAmountDue},${d.loanOverdueAmount},${d.totalDue}`;
+      })
       .join('\n');
 
     downloadCsv(`Defaulters_Audit_${selectedPeriod.monthName}_${selectedPeriod.year}.csv`, header + rows);
@@ -143,26 +150,138 @@ export const ManageView: React.FC = () => {
 
   const filteredMembersList = members.filter((m) =>
     m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+    (m.name_en && m.name_en.toLowerCase().includes(memberSearch.toLowerCase())) ||
     String(m.account_no).includes(memberSearch) ||
     m.phone.includes(memberSearch)
   );
 
   return (
     <div className="space-y-6 pb-20 md:pb-6">
-      {/* 1. Admin Security & Password Section */}
+      {/* 0. Language Preferences (English, Hindi, Marathi) */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
+              <Globe2 size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {appLanguage === 'mr' ? 'भाषा पर्याय (Language Settings)' : 'Language Preferences'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {appLanguage === 'mr'
+                  ? 'संपूर्ण ॲपची भाषा बदला (ॲप बंद केल्यावरही हीच भाषा सेव्ह राहील)'
+                  : 'Select app language. Persists automatically across browser sessions.'}
+              </p>
+            </div>
+          </div>
+
+          <span className="text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full">
+            {appLanguage === 'en' ? 'English (Active)' : appLanguage === 'mr' ? 'मराठी (सक्रिय)' : 'हिंदी (सक्रिय)'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => setAppLanguage('en')}
+            className={`py-3 px-3 rounded-2xl border text-center transition-all ${
+              appLanguage === 'en'
+                ? 'bg-emerald-800 text-white border-emerald-900 font-bold shadow-xs ring-2 ring-emerald-800/20'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-medium'
+            }`}
+          >
+            <div className="text-sm font-bold">English</div>
+            <div className={`text-[10px] mt-0.5 ${appLanguage === 'en' ? 'text-emerald-200' : 'text-slate-400'}`}>Default</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAppLanguage('mr')}
+            className={`py-3 px-3 rounded-2xl border text-center transition-all ${
+              appLanguage === 'mr'
+                ? 'bg-emerald-800 text-white border-emerald-900 font-bold shadow-xs ring-2 ring-emerald-800/20'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-medium'
+            }`}
+          >
+            <div className="text-sm font-bold">मराठी</div>
+            <div className={`text-[10px] mt-0.5 ${appLanguage === 'mr' ? 'text-emerald-200' : 'text-slate-400'}`}>Marathi</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAppLanguage('hi')}
+            className={`py-3 px-3 rounded-2xl border text-center transition-all ${
+              appLanguage === 'hi'
+                ? 'bg-emerald-800 text-white border-emerald-900 font-bold shadow-xs ring-2 ring-emerald-800/20'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-medium'
+            }`}
+          >
+            <div className="text-sm font-bold">हिंदी</div>
+            <div className={`text-[10px] mt-0.5 ${appLanguage === 'hi' ? 'text-emerald-200' : 'text-slate-400'}`}>Hindi</div>
+          </button>
+        </div>
+      </div>
+
+      {/* 1. Supabase Cloud Sync & Real-Time Refresh */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-800 flex items-center justify-center">
+              <Database size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {appLanguage === 'mr' ? 'क्लाउड डेटा सिंक व बॅकअप' : 'Cloud Sync & Database Refresh'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {isCloudSyncActive
+                  ? (appLanguage === 'mr' ? 'Supabase PostgreSQL क्लाउड डेटाबेस सक्रिय आहे' : 'Connected to Supabase PostgreSQL database')
+                  : (appLanguage === 'mr' ? 'स्थानिक सुरक्षित डिव्हाइस स्टोरेज मोड' : 'Local device storage mode')}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                isCloudSyncActive
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-slate-100 text-slate-700 border-slate-200'
+              }`}
+            >
+              {isCloudSyncActive
+                ? (appLanguage === 'mr' ? 'क्लाउड सिंक सक्रिय' : 'Cloud Connected')
+                : (appLanguage === 'mr' ? 'स्थानिक मोड' : 'Device Storage')}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => refreshData()}
+              disabled={isRefreshing}
+              className="py-1.5 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+            >
+              <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
+              <span>{isRefreshing ? (appLanguage === 'mr' ? 'रिफ्रेश होत आहे...' : 'Refreshing...') : (appLanguage === 'mr' ? 'रिफ्रेश करा' : 'Refresh from Cloud')}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Admin Security & Password Section */}
       {isAdmin && (
         <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold text-lg">
-                👑
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
+                <ShieldCheck size={20} className="text-amber-800" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  सेक्रेटरी / ॲडमिन सुरक्षा व पासवर्ड
+                  {appLanguage === 'mr' ? 'सेक्रेटरी / ॲडमिन सुरक्षा व पासवर्ड' : 'Secretary / Admin Security & Password'}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  मुख्य ॲडमिन क्रेडेंशियल्स आणि पासवर्ड व्यवस्थापन
+                  {appLanguage === 'mr' ? 'मुख्य ॲडमिन क्रेडेंशियल्स आणि पासवर्ड व्यवस्थापन' : 'Master administrator credentials and access passcode'}
                 </p>
               </div>
             </div>
@@ -173,28 +292,32 @@ export const ManageView: React.FC = () => {
               className="py-2 px-3 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
             >
               <KeyRound size={14} />
-              <span>ॲडमिन पासवर्ड बदला</span>
+              <span>{appLanguage === 'mr' ? 'ॲडमिन पासवर्ड बदला' : 'Change Admin Password'}</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 font-medium block">ॲडमिन लॉगिन आयडी:</span>
+              <span className="text-slate-500 font-medium block">
+                {appLanguage === 'mr' ? 'ॲडमिन लॉगिन आयडी:' : 'Admin Login Username:'}
+              </span>
               <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">
-                admin किंवा {society.contact_phone || '9800000000'}
+                admin {appLanguage === 'mr' ? 'किंवा' : 'or'} {society.contact_phone || '9800000000'}
               </span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-500 font-medium block">ॲडमिन अधिकार:</span>
+              <span className="text-slate-500 font-medium block">
+                {appLanguage === 'mr' ? 'ॲडमिन अधिकार:' : 'Admin Privileges:'}
+              </span>
               <span className="font-bold text-emerald-800 text-sm mt-0.5 block">
-                पूर्ण CRUD अधिकार (सदस्य, हिशोब, ताळेबंद)
+                {appLanguage === 'mr' ? 'पूर्ण CRUD अधिकार (सदस्य, हिशोब, ताळेबंद)' : 'Full System Access (Members, Register, Loans, Backup)'}
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. Web Push Notifications & OS-Level Alert Center */}
+      {/* 3. Web Push Notifications & OS-Level Alert Center */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -203,10 +326,12 @@ export const ManageView: React.FC = () => {
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Web Push सूचना केंद्र (OS-Level Notifications)
+                {appLanguage === 'mr' ? 'Web Push सूचना केंद्र (OS-Level Notifications)' : 'Web Push Notification Center'}
               </h3>
               <p className="text-xs text-slate-500">
-                ॲप बंद असतानाही सभासदांच्या मोबाईलवर त्वरित सूचना पोहोचवा
+                {appLanguage === 'mr'
+                  ? 'ॲप बंद असतानाही सभासदांच्या मोबाईलवर त्वरित सूचना पोहोचवा'
+                  : 'Deliver instant alerts to members phones even when the browser or app is closed'}
               </p>
             </div>
           </div>
@@ -216,15 +341,15 @@ export const ManageView: React.FC = () => {
               <button
                 type="button"
                 onClick={subscribeToPushNotifications}
-                className="py-2 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                className="py-2 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <Bell size={14} />
-                <span>या फोनवर सूचना सुरू करा</span>
+                <span>{appLanguage === 'mr' ? 'या फोनवर सूचना सुरू करा' : 'Enable Push Notifications'}</span>
               </button>
             ) : (
               <span className="text-xs font-bold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full flex items-center gap-1">
                 <CheckCircle2 size={13} />
-                <span>सूचना सक्रिय आहेत</span>
+                <span>{appLanguage === 'mr' ? 'सूचना सक्रिय आहेत' : 'Notifications Active'}</span>
               </span>
             )}
           </div>
@@ -236,10 +361,12 @@ export const ManageView: React.FC = () => {
             <div>
               <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                 <Send size={14} className="text-emerald-800" />
-                <span>सर्व सभासदांना सूचना पाठवा</span>
+                <span>{appLanguage === 'mr' ? 'सर्व सभासदांना सूचना पाठवा' : 'Broadcast Announcement'}</span>
               </h4>
               <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                बैठक, कार्यक्रम किंवा महत्त्वाच्या सोसायटी निर्णयाची त्वरित पुश सूचना सर्व सदस्यांना पाठवा.
+                {appLanguage === 'mr'
+                  ? 'बैठक, कार्यक्रम किंवा महत्त्वाच्या सोसायटी निर्णयाची त्वरित पुश सूचना सर्व सदस्यांना पाठवा.'
+                  : 'Send custom announcement or society circular directly to all 40 members.'}
               </p>
             </div>
             <button
@@ -247,7 +374,7 @@ export const ManageView: React.FC = () => {
               onClick={() => setIsBroadcastModalOpen(true)}
               className="w-full py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-colors"
             >
-              नवीन सूचना तयार करा
+              {appLanguage === 'mr' ? 'नवीन सूचना तयार करा' : 'Create Broadcast'}
             </button>
           </div>
 
@@ -256,34 +383,45 @@ export const ManageView: React.FC = () => {
             <div>
               <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                 <Bell size={14} className="text-amber-700" />
-                <span>मासिक वर्गणी व हप्ता आठवण (Due Reminder)</span>
+                <span>{appLanguage === 'mr' ? 'मासिक वर्गणी व हप्ता आठवण' : 'Monthly Due Reminders'}</span>
               </h4>
               <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                या महिन्यातील सर्व {defaulters.length} थकबाकीदारांना त्वरित मासिक वर्गणी (₹300) व हप्ता भरण्याची आठवण पाठवा.
+                {appLanguage === 'mr'
+                  ? `या महिन्यातील सर्व ${defaulters.length} थकबाकीदारांना त्वरित मासिक वर्गणी (₹300) व हप्ता भरण्याची आठवण पाठवा.`
+                  : `Send instant payment reminder alert to all ${defaulters.length} unpaid members for this period.`}
               </p>
             </div>
             <button
               type="button"
               onClick={handleSendDueAlert}
               disabled={sendingDueAlert}
-              className="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-xs font-bold transition-colors"
+              className="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
             >
-              {sendingDueAlert ? 'पाठवत आहे...' : alertSuccess ? 'सूचना पाठवली! ✅' : '📢 थकीत आठवण सूचना पाठवा'}
+              <Bell size={13} />
+              <span>
+                {sendingDueAlert
+                  ? (appLanguage === 'mr' ? 'पाठवत आहे...' : 'Sending Alerts...')
+                  : alertSuccess
+                  ? (appLanguage === 'mr' ? 'सूचना पाठवली!' : 'Sent Successfully!')
+                  : (appLanguage === 'mr' ? 'थकीत आठवण सूचना पाठवा' : 'Send Due Reminders')}
+              </span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 3. Member Password Master List (Admin only) */}
+      {/* 4. Member Password Master List (Admin only) */}
       {isAdmin && (
         <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                सर्व सभासद पासवर्ड व पिन व्यवस्थापन
+                {appLanguage === 'mr' ? 'सर्व सभासद पासवर्ड व पिन व्यवस्थापन' : 'Member Passwords & PIN Management'}
               </h3>
               <p className="text-xs text-slate-500">
-                सभासदांचा लॉगिन पिन रीसेट करा किंवा नवीन पासवर्ड सेट करा (डिफॉल्ट: 1234)
+                {appLanguage === 'mr'
+                  ? 'सभासदांचा लॉगिन पिन रीसेट करा किंवा नवीन पासवर्ड सेट करा (डिफॉल्ट: 1234)'
+                  : 'Reset member login PINs or configure custom passwords (Default: 1234)'}
               </p>
             </div>
 
@@ -293,7 +431,7 @@ export const ManageView: React.FC = () => {
                 type="text"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="नाव किंवा अकौंट नं. शोधा..."
+                placeholder={appLanguage === 'mr' ? 'नाव किंवा अकौंट नं. शोधा...' : 'Search name or account no...'}
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-800"
               />
             </div>
@@ -307,21 +445,23 @@ export const ManageView: React.FC = () => {
                     #{m.account_no}
                   </span>
                   <div>
-                    <span className="font-bold text-slate-900">{m.name_mr || m.name}</span>
+                    <span className="font-bold text-slate-900">
+                      {appLanguage === 'mr' ? (m.name_mr || m.name) : (m.name_en || m.name)}
+                    </span>
                     <span className="text-[11px] text-slate-500 ml-1.5">({m.phone})</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-600">
-                    पिन: <strong>{m.password || '1234'}</strong>
+                    {appLanguage === 'mr' ? 'पिन:' : 'PIN:'} <strong>{m.password || '1234'}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={() => openPasswordModal({ type: 'member', member: m })}
                     className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-emerald-800 font-bold rounded-lg text-[11px]"
                   >
-                    बदला
+                    {appLanguage === 'mr' ? 'बदला' : 'Change'}
                   </button>
                 </div>
               </div>
@@ -330,7 +470,7 @@ export const ManageView: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Society Profile Configuration */}
+      {/* 5. Society Profile Configuration */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -338,15 +478,19 @@ export const ManageView: React.FC = () => {
               <Building2 size={20} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">सोसायटी प्रोफाइल माहिती</h3>
-              <p className="text-xs text-slate-500">सोसायटीचे नाव, UPI आयडी आणि संपर्क तपशील</p>
+              <h3 className="text-sm font-bold text-slate-900">
+                {appLanguage === 'mr' ? 'सोसायटी प्रोफाइल माहिती' : 'Society Profile Settings'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {appLanguage === 'mr' ? 'सोसायटीचे नाव, UPI आयडी आणि संपर्क तपशील' : 'Official society name, UPI ID, and contact details'}
+              </p>
             </div>
           </div>
 
           {savedSuccess && (
             <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
               <Check size={14} />
-              <span>जतन केले!</span>
+              <span>{appLanguage === 'mr' ? 'जतन केले!' : 'Saved Successfully!'}</span>
             </span>
           )}
         </div>
@@ -354,7 +498,9 @@ export const ManageView: React.FC = () => {
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">सोसायटीचे अधिकृत नाव</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {appLanguage === 'mr' ? 'सोसायटीचे अधिकृत नाव' : 'Official Society Name'}
+              </label>
               <input
                 type="text"
                 required
@@ -365,7 +511,9 @@ export const ManageView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">सोसायटी UPI आयडी</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {appLanguage === 'mr' ? 'सोसायटी UPI आयडी' : 'Society UPI ID'}
+              </label>
               <input
                 type="text"
                 required
@@ -378,7 +526,9 @@ export const ManageView: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">संपर्क मोबाईल नंबर</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {appLanguage === 'mr' ? 'संपर्क मोबाईल नंबर' : 'Contact Phone Number'}
+              </label>
               <input
                 type="tel"
                 value={contactPhone}
@@ -388,7 +538,9 @@ export const ManageView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">पत्ता / लोकेशन</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {appLanguage === 'mr' ? 'पत्ता / लोकेशन' : 'Address / Location'}
+              </label>
               <input
                 type="text"
                 value={address}
@@ -403,13 +555,13 @@ export const ManageView: React.FC = () => {
               type="submit"
               className="py-2.5 px-5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
             >
-              माहिती जतन करा
+              {appLanguage === 'mr' ? 'माहिती जतन करा' : 'Save Changes'}
             </button>
           </div>
         </form>
       </div>
 
-      {/* 5. Society UPI QR Code & Counter Standee */}
+      {/* 6. Society UPI QR Code & Counter Standee */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -417,8 +569,12 @@ export const ManageView: React.FC = () => {
               <QrCode size={20} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">अधिकृत सोसायटी UPI QR कोड</h3>
-              <p className="text-xs text-slate-500">कोणत्याही UPI ॲपवरून वर्गणी जमा करण्यासाठी</p>
+              <h3 className="text-sm font-bold text-slate-900">
+                {appLanguage === 'mr' ? 'अधिकृत सोसायटी UPI QR कोड' : 'Official Society UPI QR Code'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {appLanguage === 'mr' ? 'कोणत्याही UPI ॲपवरून वर्गणी जमा करण्यासाठी' : 'Scan with any UPI app to deposit monthly shares & loan payments'}
+              </p>
             </div>
           </div>
 
@@ -428,7 +584,7 @@ export const ManageView: React.FC = () => {
             className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
           >
             <Printer size={14} />
-            <span>काऊंटर स्टँडी प्रिंट करा</span>
+            <span>{appLanguage === 'mr' ? 'काऊंटर स्टँडी प्रिंट करा' : 'Print Counter Standee'}</span>
           </button>
         </div>
 
@@ -438,10 +594,12 @@ export const ManageView: React.FC = () => {
           </div>
           <div className="space-y-2 text-center sm:text-left">
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-              डायरेक्ट बँक UPI
+              {appLanguage === 'mr' ? 'डायरेक्ट बँक UPI' : 'Direct Bank UPI'}
             </span>
             <p className="text-xs text-slate-600 leading-relaxed">
-              हा QR कोड स्कॅन करून थेट सोसायटीच्या बँक खात्यामध्ये वर्गणी व कर्ज हप्ता शून्य शुल्कात जमा होतो.
+              {appLanguage === 'mr'
+                ? 'हा QR कोड स्कॅन करून थेट सोसायटीच्या बँक खात्यामध्ये वर्गणी व कर्ज हप्ता शून्य शुल्कात जमा होतो.'
+                : 'Members can scan this QR code using PhonePe, Google Pay, or Paytm for instant 0% fee deposit.'}
             </p>
             <div className="flex items-center justify-center sm:justify-start gap-2 pt-1 font-mono text-xs font-bold text-slate-800">
               <span>{society.upi_id}</span>
@@ -458,15 +616,19 @@ export const ManageView: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Reports & CSV Export Center */}
+      {/* 7. Reports & CSV Export Center */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-800 flex items-center justify-center">
             <FileSpreadsheet size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">ऑडिट रिपोर्ट्स व CSV डाउनलोड</h3>
-            <p className="text-xs text-slate-500">मासिक जमा, चालू कर्जे व थकबाकीदारांचा संपूर्ण डेटा</p>
+            <h3 className="text-sm font-bold text-slate-900">
+              {appLanguage === 'mr' ? 'ऑडिट रिपोर्ट्स व CSV डाउनलोड' : 'Audit Reports & CSV Downloads'}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {appLanguage === 'mr' ? 'मासिक जमा, चालू कर्जे व थकबाकीदारांचा संपूर्ण डेटा' : 'Export monthly share records, loan portfolios, and defaulter audits'}
+            </p>
           </div>
         </div>
 
@@ -479,14 +641,14 @@ export const ManageView: React.FC = () => {
             <div>
               <Download size={16} className="text-emerald-800 mb-2" />
               <span className="text-xs font-bold text-slate-900 block">
-                {selectedPeriod.monthName} मासिक वर्गणी
+                {selectedPeriod.monthName} {appLanguage === 'mr' ? 'मासिक वर्गणी' : 'Shares Ledger'}
               </span>
               <span className="text-[11px] text-slate-500 block mt-0.5">
-                मासिक वर्गणी जमा लेजर (.csv)
+                {appLanguage === 'mr' ? 'मासिक वर्गणी जमा लेजर (.csv)' : 'Monthly contributions (.csv)'}
               </span>
             </div>
             <span className="text-[10px] font-bold text-emerald-800 mt-2 block">
-              डाउनलोड करा →
+              {appLanguage === 'mr' ? 'डाउनलोड करा →' : 'Download →'}
             </span>
           </button>
 
@@ -498,14 +660,14 @@ export const ManageView: React.FC = () => {
             <div>
               <Download size={16} className="text-emerald-800 mb-2" />
               <span className="text-xs font-bold text-slate-900 block">
-                कर्ज वाटप व हप्ते
+                {appLanguage === 'mr' ? 'कर्ज वाटप व हप्ते' : 'Loans Portfolio'}
               </span>
               <span className="text-[11px] text-slate-500 block mt-0.5">
-                सर्व कर्जे व बाकी हिशोब (.csv)
+                {appLanguage === 'mr' ? 'सर्व कर्जे व बाकी हिशोब (.csv)' : 'All loans & balances (.csv)'}
               </span>
             </div>
             <span className="text-[10px] font-bold text-emerald-800 mt-2 block">
-              डाउनलोड करा →
+              {appLanguage === 'mr' ? 'डाउनलोड करा →' : 'Download →'}
             </span>
           </button>
 
@@ -517,66 +679,43 @@ export const ManageView: React.FC = () => {
             <div>
               <Download size={16} className="text-amber-700 mb-2" />
               <span className="text-xs font-bold text-slate-900 block">
-                थकबाकीदार ऑडिट रिपोर्ट
+                {appLanguage === 'mr' ? 'थकबाकीदार ऑडिट रिपोर्ट' : 'Defaulters Audit'}
               </span>
               <span className="text-[11px] text-slate-500 block mt-0.5">
-                बाकीदार यादी व एकूण रक्कम (.csv)
+                {appLanguage === 'mr' ? 'बाकीदार यादी व एकूण रक्कम (.csv)' : 'Unpaid members & dues (.csv)'}
               </span>
             </div>
             <span className="text-[10px] font-bold text-amber-700 mt-2 block">
-              डाउनलोड करा →
+              {appLanguage === 'mr' ? 'डाउनलोड करा →' : 'Download →'}
             </span>
           </button>
         </div>
       </div>
 
-      {/* 7. Cloud Storage & PWA Info */}
+      {/* 8. PWA Install & Sample Data Reset */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-800 flex items-center justify-center">
-              <Database size={20} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">डेटा बॅकअप व क्लाउड सिंक स्थिती</h3>
-              <p className="text-xs text-slate-500">
-                {isCloudSyncActive ? 'Supabase PostgreSQL क्लाउड सिंक चालू आहे' : 'स्थानिक सुरक्षित डिव्हाइस स्टोरेज'}
-              </p>
-            </div>
-          </div>
-
-          <span
-            className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-              isCloudSyncActive
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-slate-100 text-slate-700 border-slate-200'
-            }`}
-          >
-            {isCloudSyncActive ? 'क्लाउड सिंक सक्रिय' : 'डिव्हाइस स्टोरेज मोड'}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+        <div className="flex items-center justify-between text-xs">
           <button
             type="button"
             onClick={triggerPwaInstall}
-            className="text-emerald-800 font-bold hover:underline flex items-center gap-1"
+            className="text-emerald-800 font-bold hover:underline flex items-center gap-1.5"
           >
             <Smartphone size={14} />
-            <span>मोबाईलवर PWA ॲप इन्स्टॉल करा</span>
+            <span>{appLanguage === 'mr' ? 'मोबाईलवर PWA ॲप इन्स्टॉल करा' : 'Install PWA App on Phone / Desktop'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('नमुना डेटा रीसेट करायचा आहे का?')) {
+              const msg = appLanguage === 'mr' ? 'डेटा डीफॉल्टवर रीसेट करायचा आहे का?' : 'Reset to initial seed data?';
+              if (window.confirm(msg)) {
                 resetToSampleData();
               }
             }}
-            className="text-slate-500 hover:text-red-600 font-medium flex items-center gap-1"
+            className="text-slate-500 hover:text-red-600 font-medium flex items-center gap-1.5"
           >
             <RotateCcw size={13} />
-            <span>डेटा रीसेट</span>
+            <span>{appLanguage === 'mr' ? 'डेटा रीसेट' : 'Reset Data'}</span>
           </button>
         </div>
       </div>
