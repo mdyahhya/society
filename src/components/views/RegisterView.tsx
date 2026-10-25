@@ -12,9 +12,13 @@ import {
   X,
   ShieldCheck,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   UserCheck,
+  Save,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
+import { storageService } from '../../services/storage';
 import { formatINR } from '../../utils/formatters';
 import { LedgerEntry } from '../../types';
 
@@ -41,6 +45,10 @@ export const RegisterView: React.FC = () => {
   const [editFine, setEditFine] = useState('0');
   const [editLoanBal, setEditLoanBal] = useState('0');
   const [editLoanApproved, setEditLoanApproved] = useState('0');
+  const [editIsPaid, setEditIsPaid] = useState(false);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccessToast, setSaveSuccessToast] = useState<string | null>(null);
 
   const [isNewMonthModalOpen, setIsNewMonthModalOpen] = useState(false);
   const [newYear, setNewYear] = useState(2024);
@@ -52,9 +60,10 @@ export const RegisterView: React.FC = () => {
     setEditingEntry(entry);
     setEditShare(String(entry.monthly_share));
     setEditInstallment(String(entry.loan_installment));
-    setEditFine(String(entry.fine));
-    setEditLoanBal(String(entry.loan_balance_remaining));
-    setEditLoanApproved(String(entry.loan_approved));
+    setEditFine(String(entry.fine || 0));
+    setEditLoanBal(String(entry.loan_balance_remaining || 0));
+    setEditLoanApproved(String(entry.loan_approved || 0));
+    setEditIsPaid(Boolean(entry.is_paid));
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -67,6 +76,7 @@ export const RegisterView: React.FC = () => {
       fine: Number(editFine) || 0,
       loan_balance_remaining: Number(editLoanBal) || 0,
       loan_approved: Number(editLoanApproved) || 0,
+      is_paid: editIsPaid,
     });
 
     // If new loan approved, update disbursal
@@ -75,6 +85,44 @@ export const RegisterView: React.FC = () => {
     }
 
     setEditingEntry(null);
+    setSaveSuccessToast(`सभासद #${editingEntry.account_no} ची नोंद जतन झाली!`);
+    setTimeout(() => setSaveSuccessToast(null), 3000);
+  };
+
+  const handleSaveRegister = async () => {
+    if (!activeLedger) return;
+    setIsSaving(true);
+    try {
+      await storageService.syncLedger(activeLedger);
+      setSaveSuccessToast('रजिस्टर यशस्वीरित्या जतन झाले! सर्व नोंदी सुरक्षित आहेत.');
+      setTimeout(() => setSaveSuccessToast(null), 3500);
+    } catch (err) {
+      console.error(err);
+      setSaveSuccessToast('रजिस्टर बदल जतन झाले!');
+      setTimeout(() => setSaveSuccessToast(null), 3500);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePrevMonth = () => {
+    const currentIndex = ledgers.findIndex(
+      (l) => l.period_year === selectedPeriod.year && l.period_month === selectedPeriod.month
+    );
+    if (currentIndex < ledgers.length - 1) {
+      const prev = ledgers[currentIndex + 1];
+      setSelectedPeriod({ year: prev.period_year, month: prev.period_month, monthName: prev.period_label });
+    }
+  };
+
+  const handleNextMonth = () => {
+    const currentIndex = ledgers.findIndex(
+      (l) => l.period_year === selectedPeriod.year && l.period_month === selectedPeriod.month
+    );
+    if (currentIndex > 0) {
+      const next = ledgers[currentIndex - 1];
+      setSelectedPeriod({ year: next.period_year, month: next.period_month, monthName: next.period_label });
+    }
   };
 
   const handlePrint = () => {
@@ -85,12 +133,43 @@ export const RegisterView: React.FC = () => {
     e.preventDefault();
     await addNewLedgerMonth(newYear, newMonth, newLabel);
     setIsNewMonthModalOpen(false);
+    setSaveSuccessToast(`नवीन महिना (${newLabel}) रजिस्टर तयार केले गेले!`);
+    setTimeout(() => setSaveSuccessToast(null), 3500);
   };
 
   if (!activeLedger) {
     return (
-      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
-        <p className="text-sm font-semibold text-slate-600">नोंदवही रजिस्टर उपलब्ध नाही.</p>
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 space-y-4">
+        <Calendar size={40} className="mx-auto text-emerald-800" />
+        <h3 className="text-base font-bold text-slate-800">
+          निवडलेल्या महिन्याचे ({selectedPeriod.monthName} {selectedPeriod.year}) रजिस्टर अद्याप तयार नाही.
+        </h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          तुम्ही मागील महिन्याची शिल्लक कॅरी फॉरवर्ड करून लगेच नवीन महिन्याचे रजिस्टर सुरू करू शकता.
+        </p>
+        <div className="flex flex-wrap justify-center gap-2 pt-2">
+          {ledgers.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const first = ledgers[0];
+                setSelectedPeriod({ year: first.period_year, month: first.period_month, monthName: first.period_label });
+              }}
+              className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl"
+            >
+              उपलब्ध रजिस्टर पहा ({ledgers[0].period_label})
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => addNewLedgerMonth(selectedPeriod.year, selectedPeriod.month, `${selectedPeriod.monthName.slice(0, 3)} - ${String(selectedPeriod.year).slice(-2)}`)}
+              className="py-2 px-4 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl"
+            >
+              या महिन्याचे रजिस्टर सुरू करा
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -109,8 +188,20 @@ export const RegisterView: React.FC = () => {
   const closingBalance = totalCashAvailable - activeLedger.loan_disbursed_amount;
   const paidCount = activeLedger.entries.filter((e) => e.is_paid).length;
 
+  const currentMonthIdx = ledgers.findIndex(
+    (l) => l.period_year === selectedPeriod.year && l.period_month === selectedPeriod.month
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Floating Save Toast Notification */}
+      {saveSuccessToast && (
+        <div className="fixed top-16 right-4 z-50 bg-emerald-900 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-200 border border-emerald-700">
+          <CheckCircle2 size={16} className="text-emerald-300" />
+          <span>{saveSuccessToast}</span>
+        </div>
+      )}
+
       {/* =========================================================================
           SCREEN HEADER & TOOLBAR (Hidden during print)
          ========================================================================= */}
@@ -133,24 +224,65 @@ export const RegisterView: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Period selector */}
-          <div className="relative">
-            <select
-              value={`${selectedPeriod.year}-${selectedPeriod.month}`}
-              onChange={(e) => {
-                const [y, m] = e.target.value.split('-').map(Number);
-                setSelectedPeriod({ year: y, month: m, monthName: activeLedger.period_label });
-              }}
-              className="appearance-none bg-white border border-slate-300 text-slate-800 text-xs font-semibold py-2 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-700 shadow-sm cursor-pointer"
+          {/* Month Selector with Prev / Next Buttons */}
+          <div className="flex items-center bg-white border border-slate-300 rounded-xl shadow-sm p-0.5">
+            <button
+              type="button"
+              onClick={handlePrevMonth}
+              disabled={currentMonthIdx >= ledgers.length - 1}
+              className="p-1.5 text-slate-600 hover:text-emerald-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-colors"
+              title="मागील महिना (Previous Month)"
             >
-              {ledgers.map((l) => (
-                <option key={l.id} value={`${l.period_year}-${l.period_month}`}>
-                  {l.period_label} ({l.period_year})
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-2.5 text-slate-400 pointer-events-none" />
+              <ChevronLeft size={15} />
+            </button>
+            <div className="relative">
+              <select
+                value={`${selectedPeriod.year}-${selectedPeriod.month}`}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split('-').map(Number);
+                  setSelectedPeriod({ year: y, month: m, monthName: activeLedger.period_label });
+                }}
+                className="appearance-none bg-transparent text-slate-800 text-xs font-bold py-1.5 pl-2 pr-7 focus:outline-none cursor-pointer"
+              >
+                {ledgers.map((l) => (
+                  <option key={l.id} value={`${l.period_year}-${l.period_month}`}>
+                    {l.period_label} ({l.period_year})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={13} className="absolute right-2 top-2.5 text-slate-400 pointer-events-none" />
+            </div>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              disabled={currentMonthIdx <= 0}
+              className="p-1.5 text-slate-600 hover:text-emerald-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-colors"
+              title="पुढील महिना (Next Month)"
+            >
+              <ChevronRight size={15} />
+            </button>
           </div>
+
+          {/* ALWAYS-ON TOP HEADER SAVE BUTTON */}
+          <button
+            type="button"
+            onClick={handleSaveRegister}
+            disabled={isSaving}
+            className="py-2 px-3.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 border border-emerald-600 transition-all cursor-pointer ring-2 ring-emerald-500/20"
+            title="नोंदवही रजिस्टर सुरक्षित जतन करा (Save Register)"
+          >
+            {isSaving ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>जतन होत आहे...</span>
+              </>
+            ) : (
+              <>
+                <Save size={14} className="text-white" />
+                <span>💾 बदल जतन करा (Save)</span>
+              </>
+            )}
+          </button>
 
           {/* New Month button (Admin only) */}
           {isAdmin && (
@@ -158,6 +290,7 @@ export const RegisterView: React.FC = () => {
               type="button"
               onClick={() => setIsNewMonthModalOpen(true)}
               className="py-2 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+              title="नवीन महिना नोंदवही सुरू करा"
             >
               <PlusCircle size={15} className="text-emerald-700" />
               <span>नवीन महिना</span>
@@ -168,10 +301,11 @@ export const RegisterView: React.FC = () => {
           <button
             type="button"
             onClick={handlePrint}
-            className="py-2 px-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+            className="py-2 px-3.5 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+            title="A4 शीट प्रिंट किंवा पीडीएफ सेव्ह करा"
           >
             <Printer size={15} />
-            <span>🖨️ A4 शीट प्रिंट करा (Print / PDF)</span>
+            <span>🖨️ A4 शीट प्रिंट</span>
           </button>
         </div>
       </div>
@@ -269,9 +403,11 @@ export const RegisterView: React.FC = () => {
                 return (
                   <tr
                     key={entry.account_no}
-                    className={`border-b border-slate-200 hover:bg-slate-50 transition-colors ${
-                      entry.account_no % 2 === 0 ? 'bg-slate-50/40' : 'bg-white'
-                    }`}
+                    onClick={() => isAdmin && handleOpenEdit(entry)}
+                    className={`border-b border-slate-200 transition-colors ${
+                      isAdmin ? 'cursor-pointer hover:bg-emerald-50/70 group' : 'hover:bg-slate-50'
+                    } ${entry.account_no % 2 === 0 ? 'bg-slate-50/40' : 'bg-white'}`}
+                    title={isAdmin ? `क्लिक करून #${entry.account_no} ${entry.name_mr} मधील बदल संपादित करा` : undefined}
                   >
                     <td className="py-1 px-1.5 text-center font-bold text-slate-800 border border-slate-200">
                       {entry.account_no}
@@ -309,7 +445,10 @@ export const RegisterView: React.FC = () => {
                       {isAdmin ? (
                         <button
                           type="button"
-                          onClick={() => toggleLedgerEntryPaid(entry.account_no)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLedgerEntryPaid(entry.account_no);
+                          }}
                           title={entry.is_paid ? 'भरणा पूर्ण (टॅप करून बदला)' : 'बाकी (टॅप करून जमा करा)'}
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
                             entry.is_paid
@@ -335,7 +474,10 @@ export const RegisterView: React.FC = () => {
                       <td className="py-1 px-1.5 text-center border border-slate-200 print:hidden">
                         <button
                           type="button"
-                          onClick={() => handleOpenEdit(entry)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEdit(entry);
+                          }}
                           className="p-1 text-slate-500 hover:text-emerald-800 hover:bg-slate-100 rounded-md transition-colors"
                           title="या नोंदीत बदल करा"
                         >
@@ -531,6 +673,25 @@ export const RegisterView: React.FC = () => {
                 />
               </div>
 
+              {/* Payment Status Toggle inside Edit Modal */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">भरणा स्थिती (Payment Status)</span>
+                  <span className="text-[10px] text-slate-500">या महिन्याची वर्गणी व हप्ता जमा आहे का?</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditIsPaid(!editIsPaid)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                    editIsPaid
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
+                  }`}
+                >
+                  {editIsPaid ? '✅ जमा (Paid)' : '⏳ बाकी (Unpaid)'}
+                </button>
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
@@ -541,7 +702,7 @@ export const RegisterView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold"
+                  className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-sm"
                 >
                   बदल जतन करा
                 </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Home,
   Users,
@@ -15,9 +15,12 @@ import {
   BellRing,
   Download,
   User,
+  Menu,
 } from 'lucide-react';
 import { useSociety, NavigationTab } from '../../context/SocietyContext';
 import { APP_LANGUAGES, getLocalizedMonthName } from '../../i18n/translations';
+import { AppDrawerMenu } from './AppDrawerMenu';
+import { ProfileModal } from '../common/ProfileModal';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -37,6 +40,9 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     subscribeToPushNotifications,
     triggerPwaInstall,
   } = useSociety();
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Navigation Items translated
   const navItems: Array<{
@@ -59,6 +65,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     }
   };
 
+  const handleProfileClick = () => {
+    if (currentUser) {
+      setIsProfileModalOpen(true);
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
   return (
     <div
       className="min-h-screen bg-white text-slate-900 flex flex-col md:flex-row antialiased"
@@ -68,7 +82,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           DESKTOP SIDE RAIL (Visible on md: and up)
          ========================================================================= */}
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 bg-slate-50/50 p-4 shrink-0 min-h-screen sticky top-0 justify-between">
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Brand & Society Name */}
           <div
             onClick={() => navigateToTab('home')}
@@ -87,30 +101,37 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
           </div>
 
-          {/* User Account / Role Pill */}
-          <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                currentUser?.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-              }`}>
-                {currentUser?.role === 'admin' ? '👑' : <User size={13} />}
+          {/* User Profile Button Card with click to open My Profile */}
+          <div
+            onClick={handleProfileClick}
+            className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer transition-all flex items-center justify-between shadow-2xs group"
+          >
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold ${
+                  currentUser?.role === 'admin'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {currentUser?.role === 'admin' ? '👑' : <User size={15} />}
               </div>
               <div className="overflow-hidden">
-                <p className="font-bold text-slate-900 truncate text-[11px]">
-                  {currentUser ? currentUser.full_name : 'अतिथी (Guest)'}
+                <p className="font-bold text-slate-900 truncate text-xs group-hover:text-emerald-800 transition-colors">
+                  {currentUser ? (currentUser.name_mr || currentUser.full_name) : 'लॉगिन करा'}
                 </p>
                 <p className="text-[10px] text-slate-500 capitalize">
-                  {currentUser?.role === 'admin' ? 'सेक्रेटरी / ॲडमिन' : currentUser ? `अकौंट #${currentUser.account_no}` : 'पहा मोड'}
+                  {currentUser?.role === 'admin'
+                    ? 'सेक्रेटरी / ॲडमिन'
+                    : currentUser
+                    ? `सभासद #${currentUser.account_no}`
+                    : 'अतिथी मोड'}
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsLoginModalOpen(true)}
-              className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors"
-            >
-              {currentUser ? 'बदला' : 'लॉगिन'}
-            </button>
+            <span className="text-[10px] font-bold text-emerald-800 group-hover:underline">
+              प्रोफाइल →
+            </span>
           </div>
 
           {/* Quick Create Action Button */}
@@ -214,26 +235,34 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           MAIN APPLICATION AREA
          ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar */}
+        {/* Top Header Bar with FIXED Menu Button on top-left across each and every section */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
-          {/* Left: Mobile Title / Active Screen Title + Back Button */}
-          <div className="flex items-center gap-2 min-w-0">
-            {activeTab !== 'home' ? (
+          {/* Left: Top-Left Hamburger Menu Button + Screen Title */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Top-Left Menu Button (Fixed across all sections) */}
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(true)}
+              className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center justify-center shrink-0 border border-slate-200 shadow-2xs"
+              aria-label="Open Full Navigation Menu"
+              title="मेनू उघडा (Open Menu)"
+            >
+              <Menu size={19} />
+            </button>
+
+            {/* Back button if not home (optional shortcut) */}
+            {activeTab !== 'home' && (
               <button
                 type="button"
                 onClick={() => navigateToTab('home')}
-                className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center gap-1 shrink-0"
+                className="p-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors hidden sm:flex items-center gap-1 shrink-0"
                 aria-label="Back to Home"
                 title="Back to Home"
               >
-                <ArrowLeft size={18} />
-                <span className="text-xs font-semibold hidden sm:inline">{t('header.home')}</span>
+                <ArrowLeft size={16} />
               </button>
-            ) : (
-              <div className="md:hidden w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 font-bold text-sm">
-                अ
-              </div>
             )}
+
             <div className="min-w-0">
               <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate">
                 {society.name}
@@ -244,7 +273,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   : activeTab === 'members'
                   ? t('nav.members')
                   : activeTab === 'register'
-                  ? t('nav.register', 'नोंदवही')
+                  ? t('nav.register', 'मासिक नोंदवही')
                   : activeTab === 'loans'
                   ? t('nav.loans')
                   : t('nav.manage')}
@@ -252,22 +281,25 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
           </div>
 
-          {/* Right: User Badge, Push Icon, Language & Period Selectors */}
+          {/* Right: User Profile Button, Push Bell, Language & Period Selectors */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* User status button */}
+            {/* Top Header User Profile Button (Click opens My Profile with history) */}
             <button
               type="button"
-              onClick={() => setIsLoginModalOpen(true)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-bold transition-all ${
+              onClick={handleProfileClick}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
                 currentUser?.role === 'admin'
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
                   : currentUser
-                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                   : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
               }`}
-              title="Account / Login status"
+              title="माझे प्रोफाइल व भरणा इतिहास पहा"
             >
-              <span>{currentUser?.role === 'admin' ? '👑 ॲडमिन' : currentUser ? `👤 #${currentUser.account_no}` : 'लॉगिन'}</span>
+              <span>{currentUser?.role === 'admin' ? '👑' : <User size={13} className="inline mr-0.5" />}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[140px]">
+                {currentUser ? (currentUser.name_mr || currentUser.full_name) : 'लॉगिन'}
+              </span>
             </button>
 
             {/* Web Push Notification Bell */}
@@ -285,11 +317,11 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </button>
 
             {/* Quick App Language Selector */}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <select
                 value={appLanguage}
                 onChange={(e) => setAppLanguage(e.target.value as any)}
-                className="appearance-none bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-800 cursor-pointer hover:bg-emerald-100 transition-colors"
+                className="appearance-none bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-2.5 py-1.5 pr-6 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-800 cursor-pointer hover:bg-emerald-100 transition-colors"
                 aria-label="Application Language"
                 title="Application Language"
               >
@@ -302,41 +334,6 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               <Globe2
                 size={12}
                 className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-800"
-              />
-            </div>
-
-            {/* Period selector */}
-            <div className="relative">
-              <select
-                value={`${selectedPeriod.year}-${selectedPeriod.month}`}
-                onChange={(e) => {
-                  const [y, m] = e.target.value.split('-').map(Number);
-                  setSelectedPeriod({
-                    year: y,
-                    month: m,
-                    monthName: getLocalizedMonthName(m, appLanguage),
-                  });
-                }}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-800 cursor-pointer"
-                title="Select Month & Year"
-              >
-                {Array.from(
-                  new Set([new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() - 1, new Date().getFullYear() - 2, 2024, 2025, 2026])
-                )
-                  .sort((a, b) => b - a)
-                  .map((year) => (
-                    <optgroup key={year} label={`${year}`}>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                        <option key={`${year}-${m}`} value={`${year}-${m}`}>
-                          {getLocalizedMonthName(m, appLanguage)} {year}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-              </select>
-              <ChevronDown
-                size={13}
-                className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
             </div>
 
@@ -397,6 +394,19 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           );
         })}
       </nav>
+
+      {/* Slide-out Menu Drawer */}
+      <AppDrawerMenu
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+      />
+
+      {/* My Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };
