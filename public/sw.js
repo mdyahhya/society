@@ -69,8 +69,8 @@ self.addEventListener('fetch', (event) => {
 // Web Push Notification Handler
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'अल-बदर सोसायटी सूचना',
-    body: 'सोसायटीकडून नवीन सूचना प्राप्त झाली आहे.',
+    title: 'Al-Badr Bilasudi Society Notice',
+    body: 'New notification received from society.',
     url: '/'
   };
 
@@ -91,7 +91,7 @@ self.addEventListener('push', (event) => {
       url: data.url || '/'
     },
     actions: [
-      { action: 'open', title: 'पहा (View)' }
+      { action: 'open', title: 'Open' }
     ]
   };
 

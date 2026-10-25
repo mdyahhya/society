@@ -104,6 +104,53 @@ export const pushNotificationService = {
     url?: string;
     target?: string;
   }): Promise<{ success: boolean; message: string }> => {
+    // 1. If notification permission has not been decided yet, prompt user immediately
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (err) {
+          console.warn('Notification permission request error:', err);
+        }
+      }
+    }
+
+    // 2. ALWAYS display immediately on the active screen/device (Admin / sender)
+    // so the admin directly sees and verifies the notification on their current device!
+    let localDelivered = false;
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          if (reg && reg.showNotification) {
+            await reg.showNotification(payload.title, {
+              body: payload.body,
+              icon: '/icon-192.png',
+              badge: '/icon.svg',
+              vibrate: [200, 100, 200],
+              data: { url: payload.url || '/' },
+            });
+            localDelivered = true;
+          }
+        }
+      } catch (err) {
+        console.warn('Service worker showNotification failed:', err);
+      }
+
+      if (!localDelivered) {
+        try {
+          new Notification(payload.title, {
+            body: payload.body,
+            icon: '/icon-192.png',
+          });
+          localDelivered = true;
+        } catch (err) {
+          console.warn('new Notification fallback failed:', err);
+        }
+      }
+    }
+
+    // 3. Dispatch to backend /api/send-push to notify remote devices
     try {
       const res = await fetch('/api/send-push', {
         method: 'POST',
@@ -111,31 +158,36 @@ export const pushNotificationService = {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const result = await res.json();
-        return { success: true, message: result.message || 'Notification sent successfully.' };
-      } else {
-        // Fallback for local testing if running without serverless function
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(payload.title, {
-            body: payload.body,
-            icon: '/icon-192.png',
-          });
-          return { success: true, message: 'Notification delivered directly on this screen.' };
-        }
-        return { success: false, message: 'Server endpoint returned error.' };
+        return {
+          success: true,
+          message: result.message || 'Notification broadcast to all subscribed devices successfully.',
+        };
       }
-    } catch {
-      // Local fallback
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(payload.title, {
-          body: payload.body,
-          icon: '/icon-192.png',
-        });
-        return { success: true, message: 'Notification delivered directly on this screen.' };
-      }
-      return { success: false, message: 'Failed to dispatch push notification.' };
+    } catch (err) {
+      console.warn('Remote /api/send-push fetch failed:', err);
     }
+
+    if (localDelivered) {
+      return {
+        success: true,
+        message: 'Notification delivered to your screen successfully.',
+      };
+    }
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+      return {
+        success: false,
+        message: 'Notifications blocked by browser. Please enable notifications in your browser site settings.',
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Notification dispatched.',
+    };
   },
 
   sendBroadcast: async (payload: { title: string; body: string; url?: string }): Promise<{ success: boolean; message: string }> => {

@@ -1069,9 +1069,24 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const sendDueReminders = async (): Promise<{ count: number }> => {
     if (!data) return { count: 0 };
+    const monthName = appLanguage === 'mr' ? getLocalizedMonthName(selectedPeriod.month, 'mr') : selectedPeriod.monthName;
+    const title =
+      appLanguage === 'mr'
+        ? 'अल-बदर सोसायटी: मासिक वर्गणी व हप्ता आठवण'
+        : appLanguage === 'hi'
+        ? 'अल-बद्र सोसाइटी: मासिक अंशदान एवं ऋण किस्त अनुस्मारक'
+        : 'Al-Badr Bilasudi Society: Monthly Share & Loan Due Reminder';
+
+    const body =
+      appLanguage === 'mr'
+        ? `माहे ${monthName} ची मासिक वर्गणी (₹300) आणि कर्जाचा हप्ता भरण्याची मुदत सुरू आहे. सर्व ${defaulters.length} थकबाकीदार सभासदांनी कृपया वेळेत जमा करावी.`
+        : appLanguage === 'hi'
+        ? `माह ${monthName} का मासिक अंशदान (₹300) और ऋण किस्त जमा करने की अवधि सक्रिय है। सभी ${defaulters.length} बकाया सदस्य कृपया समय पर जमा करें।`
+        : `Collection for ${monthName} (Monthly Share ₹300 + active loan installment) is due. All ${defaulters.length} pending members please deposit on time.`;
+
     await pushNotificationService.sendPush({
-      title: 'अल-बदर सोसायटी: मासिक वर्गणी व हप्ता आठवण ⏰',
-      body: `माहे ${selectedPeriod.monthName} ची मासिक वर्गणी (₹300) आणि कर्जाचा हप्ता भरण्याची मुदत सुरू आहे. कृपया वेळेत जमा करावी.`,
+      title,
+      body,
       url: '/',
       target: 'all',
     });

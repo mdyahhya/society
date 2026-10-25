@@ -10,6 +10,7 @@ export const PasswordChangeModal: React.FC = () => {
     passwordModalTarget,
     changeAdminPassword,
     changeMemberPassword,
+    appLanguage,
   } = useSociety();
 
   const [newPassword, setNewPassword] = useState('');
@@ -24,8 +25,12 @@ export const PasswordChangeModal: React.FC = () => {
   const targetMember = passwordModalTarget.member;
 
   const title = isForAdmin
-    ? 'ॲडमिन पासवर्ड बदला (Change Admin Password)'
-    : `सभासद पासवर्ड बदला: अकौंट नं. ${targetMember?.account_no} (${targetMember?.name})`;
+    ? appLanguage === 'mr'
+      ? 'ॲडमिन पासवर्ड बदला (Change Admin Password)'
+      : 'Change Secretary / Admin Password'
+    : appLanguage === 'mr'
+    ? `सभासद पासवर्ड बदला: अकौंट नं. ${targetMember?.account_no} (${targetMember?.name_mr || targetMember?.name})`
+    : `Change Member Password: Account #${targetMember?.account_no} (${targetMember?.name_en || targetMember?.name})`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +38,20 @@ export const PasswordChangeModal: React.FC = () => {
     setSuccessMsg('');
 
     if (newPassword.length < 4) {
-      setErrorMsg('पासवर्ड किमान 4 अक्षरे किंवा अंकांचा असावा.');
+      setErrorMsg(
+        appLanguage === 'mr'
+          ? 'पासवर्ड किमान 4 अक्षरे किंवा अंकांचा असावा.'
+          : 'Password must be at least 4 characters or digits.'
+      );
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setErrorMsg('दोन्ही पासवर्ड जुळत नाहीत.');
+      setErrorMsg(
+        appLanguage === 'mr'
+          ? 'दोन्ही पासवर्ड जुळत नाहीत.'
+          : 'Passwords do not match.'
+      );
       return;
     }
 
@@ -46,10 +59,18 @@ export const PasswordChangeModal: React.FC = () => {
     try {
       if (isForAdmin) {
         await changeAdminPassword(newPassword);
-        setSuccessMsg('ॲडमिन पासवर्ड यशस्वीरीत्या बदलला आहे!');
+        setSuccessMsg(
+          appLanguage === 'mr'
+            ? 'ॲडमिन पासवर्ड यशस्वीरीत्या बदलला आहे!'
+            : 'Admin password successfully updated!'
+        );
       } else if (targetMember) {
         await changeMemberPassword(targetMember.account_no, newPassword);
-        setSuccessMsg(`अकौंट नं. ${targetMember.account_no} चा पासवर्ड यशस्वीरीत्या बदलला!`);
+        setSuccessMsg(
+          appLanguage === 'mr'
+            ? `अकौंट नं. ${targetMember.account_no} चा पासवर्ड यशस्वीरीत्या बदलला!`
+            : `Password for Account #${targetMember.account_no} successfully updated!`
+        );
       }
 
       setTimeout(() => {
@@ -59,7 +80,11 @@ export const PasswordChangeModal: React.FC = () => {
         setIsPasswordModalOpen(false);
       }, 1500);
     } catch {
-      setErrorMsg('पासवर्ड बदलताना त्रुटी आली.');
+      setErrorMsg(
+        appLanguage === 'mr'
+          ? 'पासवर्ड बदलताना त्रुटी आली.'
+          : 'Failed to update password. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -71,35 +96,43 @@ export const PasswordChangeModal: React.FC = () => {
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
           {isForAdmin ? (
             <p>
-              तुम्ही <strong>सेक्रेटरी / ॲडमिन</strong> खात्याचा मुख्य पासवर्ड बदलत आहात. नवीन पासवर्ड जतन झाल्यानंतर पुढील वेळी लॉगिनसाठी हाच पासवर्ड वापरावा लागेल.
+              {appLanguage === 'mr'
+                ? 'तुम्ही सेक्रेटरी / ॲडमिन खात्याचा मुख्य पासवर्ड बदलत आहात. नवीन पासवर्ड जतन झाल्यानंतर पुढील वेळी लॉगिनसाठी हाच पासवर्ड वापरावा लागेल.'
+                : 'You are modifying the master Secretary / Administrator credentials. You will need to use this new passcode for future logins.'}
             </p>
           ) : (
             <p>
-              सभासद <strong>{targetMember?.name}</strong> (अकौंट नं. {targetMember?.account_no}) चा नवीन लॉगिन पिन/पासवर्ड सेट करत आहात.
+              {appLanguage === 'mr'
+                ? `सभासद ${targetMember?.name_mr || targetMember?.name} (अकौंट नं. ${targetMember?.account_no}) चा नवीन लॉगिन पिन/पासवर्ड सेट करत आहात.`
+                : `Setting a new login PIN/password for Member ${targetMember?.name_en || targetMember?.name} (Account #${targetMember?.account_no}).`}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">नवीन पासवर्ड / पिन</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            {appLanguage === 'mr' ? 'नवीन पासवर्ड / पिन' : 'New Password / PIN'}
+          </label>
           <input
             type="text"
             required
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="किमान 4 अंक किंवा अक्षरे"
+            placeholder={appLanguage === 'mr' ? 'किमान 4 अंक किंवा अक्षरे' : 'At least 4 digits or characters'}
             className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700 font-medium"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">नवीन पासवर्ड पुन्हा टाका</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            {appLanguage === 'mr' ? 'नवीन पासवर्ड पुन्हा टाका' : 'Confirm New Password'}
+          </label>
           <input
             type="text"
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="पुन्हा पासवर्ड टाका"
+            placeholder={appLanguage === 'mr' ? 'पुन्हा पासवर्ड टाका' : 'Re-enter password'}
             className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700 font-medium"
           />
         </div>
@@ -124,7 +157,7 @@ export const PasswordChangeModal: React.FC = () => {
             onClick={() => setIsPasswordModalOpen(false)}
             className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
           >
-            रद्द करा
+            {appLanguage === 'mr' ? 'रद्द करा' : 'Cancel'}
           </button>
           <button
             type="submit"
@@ -132,7 +165,15 @@ export const PasswordChangeModal: React.FC = () => {
             className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
           >
             <KeyRound size={15} />
-            <span>{isSubmitting ? 'जतन करत आहे...' : 'पासवर्ड जतन करा'}</span>
+            <span>
+              {isSubmitting
+                ? appLanguage === 'mr'
+                  ? 'जतन करत आहे...'
+                  : 'Saving...'
+                : appLanguage === 'mr'
+                ? 'पासवर्ड जतन करा'
+                : 'Save Password'}
+            </span>
           </button>
         </div>
       </form>
