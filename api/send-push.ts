@@ -24,10 +24,10 @@ export default async function handler(req: any, res: any) {
   const vapidPublicKey =
     process.env.VAPID_PUBLIC_KEY ||
     process.env.VITE_VAPID_PUBLIC_KEY ||
-    'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+    'BFhChR9G1d07Sg_CpUXX9qPFYQs902Rx6gTl21gv9ilTlKfrIp5qLmhVaE2e50Uo0klJeuHrh6zw6GItOX2-ZfQ';
 
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
-  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@albadr-society.org';
+  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:continentsoftwares@gmail.com';
 
   if (!vapidPrivateKey) {
     return res.status(500).json({

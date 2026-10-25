@@ -47,7 +47,7 @@ export const pushNotificationService = {
     // 3. Get VAPID public key
     const vapidKey =
       (import.meta as any).env?.VITE_VAPID_PUBLIC_KEY ||
-      'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+      'BFhChR9G1d07Sg_CpUXX9qPFYQs902Rx6gTl21gv9ilTlKfrIp5qLmhVaE2e50Uo0klJeuHrh6zw6GItOX2-ZfQ';
 
     try {
       let subscription = await registration.pushManager.getSubscription();
