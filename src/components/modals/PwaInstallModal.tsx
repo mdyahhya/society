@@ -25,7 +25,7 @@ export const PwaInstallModal: React.FC = () => {
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-900">
-              अल-बदर बिलासौदी को.ऑप. सोसायटी
+              अल-बदर बिलासुदी को.ऑप. सोसायटी
             </h4>
             <p className="text-[11px] text-emerald-800 font-medium">
               मोबाईल होम स्क्रीनवर ॲप प्रमाणे वापरा, इंटरनेटशिवायही उपलब्ध.

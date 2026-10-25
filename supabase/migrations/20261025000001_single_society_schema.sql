@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS public.audit_logs CASCADE;
 -- 3. Society Profile (Single Society)
 CREATE TABLE public.society_profile (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name_mr TEXT NOT NULL DEFAULT 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.',
+    name_mr TEXT NOT NULL DEFAULT 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.',
     name_en TEXT NOT NULL DEFAULT 'Al-Badr Bilasudi Co-Op Society, Solapur',
     monthly_share_amount NUMERIC(10, 2) NOT NULL DEFAULT 300.00,
     upi_id TEXT NOT NULL DEFAULT 'albadr.society@okaxis',
@@ -37,7 +37,7 @@ CREATE TABLE public.society_profile (
 
 -- Insert default single society record
 INSERT INTO public.society_profile (name_mr, name_en, monthly_share_amount, upi_id, contact_phone, address, cash_balance)
-VALUES ('अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.', 'Al-Badr Bilasudi Co-Op Society, Solapur', 300.00, 'albadr.society@okaxis', '9800000000', 'Bilasudi, Solapur, Maharashtra', 820.00);
+VALUES ('अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.', 'Al-Badr Bilasudi Co-Op Society, Solapur', 300.00, 'albadr.society@okaxis', '9800000000', 'Bilasudi, Solapur, Maharashtra', 820.00);
 
 -- 4. Auth Users Table (Direct phone & password authentication - NO email verification needed)
 CREATE TABLE public.app_auth_users (

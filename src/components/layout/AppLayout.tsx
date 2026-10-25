@@ -265,22 +265,40 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               </button>
             )}
 
-            <div className="min-w-0">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate">
-                {localizedSocietyName}
-              </span>
-              <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
-                {activeTab === 'home'
-                  ? t('nav.home')
-                  : activeTab === 'members'
-                  ? t('nav.members')
-                  : activeTab === 'register'
-                  ? t('nav.register', 'Register')
-                  : activeTab === 'loans'
-                  ? t('nav.loans')
-                  : t('nav.manage')}
-              </span>
-            </div>
+            {activeTab === 'home' ? (
+              <div
+                onClick={() => navigateToTab('home')}
+                className="min-w-0 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 shadow-xs">
+                  {appLanguage === 'mr' ? 'अ' : 'A'}
+                </div>
+                <h1
+                  className="text-xs sm:text-sm md:text-base font-bold text-slate-900 truncate tracking-tight whitespace-nowrap"
+                  title={localizedSocietyName}
+                >
+                  {localizedSocietyName}
+                </h1>
+              </div>
+            ) : (
+              <div className="min-w-0">
+                <span
+                  className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate"
+                  title={localizedSocietyName}
+                >
+                  {localizedSocietyName}
+                </span>
+                <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
+                  {activeTab === 'members'
+                    ? t('nav.members')
+                    : activeTab === 'register'
+                    ? t('nav.register', 'Register')
+                    : activeTab === 'loans'
+                    ? t('nav.loans')
+                    : t('nav.manage')}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Right: User Profile Button, Push Bell, Language & Period Selectors */}
@@ -299,7 +317,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               title={appLanguage === 'mr' ? 'माझे प्रोफाइल व भरणा इतिहास पहा' : 'View Profile & Payment History'}
             >
               <span>{currentUser?.role === 'admin' ? '👑' : <User size={13} className="inline mr-0.5" />}</span>
-              <span className="truncate max-w-[100px] sm:max-w-[140px]">
+              <span className="truncate max-w-[75px] sm:max-w-[140px]">
                 {currentUser ? getLocalizedEntityName(currentUser, appLanguage) : (appLanguage === 'mr' ? 'लॉगिन' : 'Login')}
               </span>
             </button>

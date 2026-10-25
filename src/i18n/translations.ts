@@ -1017,7 +1017,7 @@ export const translations = {
     'register.treasurerSign': 'खजिनदार / कॅशियर',
     'register.secretarySign': 'सेक्रेटरी / चिटणीस',
     'register.presidentSign': 'अध्यक्ष',
-    'register.certified': 'अल-बदर बिलासौदी को.ऑप. सोसायटी व्यवस्थापन समितीद्वारे प्रमाणित',
+    'register.certified': 'अल-बदर बिलासुदी को.ऑप. सोसायटी व्यवस्थापन समितीद्वारे प्रमाणित',
   },
 } as const;
 
@@ -1031,7 +1031,7 @@ export function getTranslation(lang: AppLanguage, key: TranslationKey | string, 
 export function getLocalizedMonthName(monthNumber: number, lang: AppLanguage = 'en'): string {
   const monthMap: Record<AppLanguage, string[]> = {
     en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    ur: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'],
+    ur: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومबर', 'دسمبر'],
     hi: ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
     mr: ['जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर'],
   };
@@ -1054,9 +1054,17 @@ export function getLocalizedSocietyName(
   society: { name: string; name_mr?: string; name_en?: string } | null | undefined,
   lang: AppLanguage = 'en'
 ): string {
-  if (!society) return 'Al-Badr Bilasudi Co-Op Society, Solapur';
-  if (lang === 'mr') return society.name_mr || 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.';
+  if (!society) {
+    return lang === 'mr'
+      ? 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.'
+      : 'Al-Badr Bilasudi Co-Op Society, Solapur';
+  }
+  if (lang === 'mr') {
+    const raw = society.name_mr || society.name || 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.';
+    return raw.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+  }
   if (lang === 'ur') return 'البدر بلاسودی کوآپریٹو سوسائٹی، شولاپور';
-  if (lang === 'hi') return 'अल-बद्र बिनव्याजी को-ऑप सोसाइटी, सोलापुर';
-  return society.name_en || society.name || 'Al-Badr Bilasudi Co-Op Society, Solapur';
+  if (lang === 'hi') return 'अल-बद्र बिलासुदी को-ऑप सोसाइटी, सोलापुर';
+  const rawEn = society.name_en || society.name || 'Al-Badr Bilasudi Co-Op Society, Solapur';
+  return rawEn.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
 }

@@ -4,7 +4,7 @@ export const SEED_SOCIETY: Society = {
   id: 'soc-albadr-01',
   name: 'Al-Badr Bilasudi Co-Op Society, Solapur',
   name_en: 'Al-Badr Bilasudi Co-Op Society, Solapur',
-  name_mr: 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.',
+  name_mr: 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.',
   upi_id: 'albadr.society@okaxis',
   currency: 'INR',
   opening_balance: 26820,

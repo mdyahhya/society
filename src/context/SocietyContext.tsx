@@ -215,7 +215,27 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Initial load
   useEffect(() => {
-    storageService.loadData().then((loaded) => setData(loaded));
+    storageService.loadData().then((loaded) => {
+      if (loaded.society) {
+        if (loaded.society.name) {
+          loaded.society.name = loaded.society.name.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+        }
+        if (loaded.society.name_mr) {
+          loaded.society.name_mr = loaded.society.name_mr.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+        } else {
+          loaded.society.name_mr = 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.';
+        }
+        if (loaded.society.name_en) {
+          loaded.society.name_en = loaded.society.name_en.replace(/Bilasoudi/gi, 'Bilasudi');
+        } else {
+          loaded.society.name_en = 'Al-Badr Bilasudi Co-Op Society, Solapur';
+        }
+        if (loaded.society.address) {
+          loaded.society.address = loaded.society.address.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+        }
+      }
+      setData(loaded);
+    });
     pushNotificationService.isSubscribed().then((sub) => setIsPushSubscribed(sub));
 
     const handleBeforeInstall = (e: any) => {
@@ -1046,7 +1066,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm text-slate-600 font-medium tracking-wide">
-            अल-बदर बिलासौदी को.ऑप. सोसायटी लोड होत आहे...
+            अल-बदर बिलासुदी को.ऑप. सोसायटी लोड होत आहे...
           </p>
         </div>
       </div>

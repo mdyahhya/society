@@ -89,13 +89,15 @@ export const storageService = {
 
           const remoteSociety: Society = {
             id: socRes.data.id || 'soc-albadr-01',
-            name: socRes.data.name_mr || 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.',
+            name: socRes.data.name_en || 'Al-Badr Bilasudi Co-Op Society, Solapur',
+            name_en: socRes.data.name_en || 'Al-Badr Bilasudi Co-Op Society, Solapur',
+            name_mr: (socRes.data.name_mr || 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.').replace(/बिलासौदी/g, 'बिलासुदी'),
             upi_id: socRes.data.upi_id || 'albadr.society@okaxis',
             currency: 'INR',
             opening_balance: Number(socRes.data.cash_balance) || 26820,
             contact_phone: socRes.data.contact_phone || '9800000000',
-            address: socRes.data.address || 'बिलासौदी, सोलापूर, महाराष्ट्र',
-            default_reminder_lang: 'mr',
+            address: (socRes.data.address || 'Bilasudi, Solapur, Maharashtra').replace(/बिलासौदी/g, 'बिलासुदी'),
+            default_reminder_lang: 'en',
             created_at: socRes.data.created_at || new Date().toISOString(),
             updated_at: socRes.data.updated_at || new Date().toISOString(),
           };
@@ -123,6 +125,22 @@ export const storageService = {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.society && Array.isArray(parsed.members) && parsed.members.length >= 40) {
+          if (parsed.society.name) {
+            parsed.society.name = parsed.society.name.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+          }
+          if (parsed.society.name_mr) {
+            parsed.society.name_mr = parsed.society.name_mr.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+          } else {
+            parsed.society.name_mr = 'अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.';
+          }
+          if (parsed.society.name_en) {
+            parsed.society.name_en = parsed.society.name_en.replace(/Bilasoudi/gi, 'Bilasudi');
+          } else {
+            parsed.society.name_en = 'Al-Badr Bilasudi Co-Op Society, Solapur';
+          }
+          if (parsed.society.address) {
+            parsed.society.address = parsed.society.address.replace(/बिलासौदी/g, 'बिलासुदी').replace(/Bilasoudi/gi, 'Bilasudi');
+          }
           return {
             society: parsed.society,
             members: parsed.members,

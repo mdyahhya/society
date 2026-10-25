@@ -5,7 +5,7 @@
 Based on the physical ledger images provided (Image 1: Blank Register Sheet; Image 2: Filled Monthly Register for October 2024), here is the verified transcription of the Society and all 40 members.
 
 ### Society Details
-* **Society Name (Marathi):** अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.
+* **Society Name (Marathi):** अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.
 * **Society Name (English):** Al-Badr Bilasudi Co-Op Society, Solapur
 * **Type:** Mutual Share & Interest-Free Loan Society (बिनव्याजी कर्ज / परस्पर सहाय्य संस्था)
 * **Standard Monthly Share (मासिक वर्गणी शेअर्स):** ₹300 per member per month
@@ -121,7 +121,7 @@ graph TD
    - Members log in with their **Account No** (1 to 40) or **Phone Number** + password/PIN (default `1234` or set by admin).
    - No email confirmation hurdles or Supabase Auth email dependency. Session persisted in localStorage / Supabase custom table.
 2. **Society Profile:**
-   - Permanent single-society profile: `अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.`
+   - Permanent single-society profile: `अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर.`
    - UPI ID and contact numbers configurable by Admin.
 3. **TypeScript Fix Completed:**
    - Fixed `src/lib/supabase.ts` error `Property 'env' does not exist on type 'ImportMeta'` by creating [vite-env.d.ts](file:///c:/Users/Administrator/Desktop/All%20projects/Society/src/vite-env.d.ts) and adding `"types": ["vite/client"]` to [tsconfig.json](file:///c:/Users/Administrator/Desktop/All%20projects/Society/tsconfig.json).

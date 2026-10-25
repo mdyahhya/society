@@ -1,4 +1,4 @@
-# अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर
+# अल-बदर बिलासुदी को.ऑप. सोसायटी, सोलापूर
 ### Al-Badr Bilasudi Co-Op Society - Financial Register & Management PWA
 
 A mobile-first Progressive Web App (PWA) tailored specifically for **Al-Badr Bilasudi Co-Op Society, Solapur**, a mutual welfare and interest-free loan society.
