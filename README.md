@@ -1,35 +1,35 @@
-# Qarz-e-Hasan Society Management PWA
+# अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर
+### Al-Badr Bilasudi Co-Op Society - Financial Register & Management PWA
 
-A mobile-first, multi-tenant Progressive Web App (PWA) designed specifically for community-run **No-Interest (Qarz-e-Hasan / Bila Soodi)** welfare societies.
-
----
-
-## Key Features
-
-- **Mutual Liquidity Pool**: Real-time pool accounting where monthly member shares expand available cash, interest-free loans disburse capital, and repayments replenish the fund.
-- **Member Management**: Track member directory, contact details, join dates, and committed monthly shares.
-- **Monthly Share Tracking**: One-tap logging of monthly shares with payment methods (UPI, Cash, Bank Transfer).
-- **Qarz-e-Hasan Loan Cycles**: Disburse zero-interest loans with installment plans and auto-calculated remaining balances.
-- **Defaulters Radar**: Real-time detection of overdue monthly shares and delayed loan installments.
-- **1-Tap WhatsApp Reminders**: Direct `wa.me` deep links with prefilled polite Islamic welfare notices and exact amount breakdown.
-- **Direct Society UPI QR Code**: Dynamic NPCI UPI QR code generator (`upi://pay?pa=...`) directly linked to the society's own bank account with zero platform custody, plus printable standee mode.
-- **Treasurer Export Center**: Download formatted CSV audits for monthly collections, loan portfolios, and defaulter lists.
-- **Installable PWA**: Installable on Android Chrome, iOS Safari, and desktop browsers with offline support.
+A mobile-first Progressive Web App (PWA) tailored specifically for **Al-Badr Bilasudi Co-Op Society, Solapur**, a mutual welfare and interest-free loan society.
 
 ---
 
-## Tech Stack
+## 🌟 Key Capabilities
 
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide Icons (SVG only, zero emojis)
-- **Database & Auth**: Supabase (PostgreSQL with Row Level Security)
-- **QR Code Engine**: `qrcode.react`
-- **PWA**: Service Worker (`sw.js`) and Web App Manifest (`manifest.json`)
+1. **Digital Register & Single-Sheet A4 Print Engine**:
+   - Exact replication of the physical 40-member register book.
+   - High-density landscape print engine (`@media print`) that fits all 40 members, totals, cash reconciliation, and secretary/president signatures on a single A4 sheet.
+2. **Simplified Direct Authentication (Zero Email Verification)**:
+   - Admin login with phone / username (`admin` or `9800000000`) and passcode.
+   - Member login using **Account No (1–40)** or phone number + PIN (default `1234`).
+   - Admin can add, edit, or delete any member, and reset member passwords with 1 click.
+3. **OS-Level Web Push Notifications**:
+   - Notifications trigger even when the PWA or browser is completely closed.
+   - Automatic receipt push notifications on monthly share collection, loan installment payment, and loan disbursal.
+   - Automated and manual due date reminders for unpaid members.
+   - Broadcast announcements for meetings and society circulars.
+4. **Member Self-Service Portal**:
+   - Passbook overview showing accumulated shares and remaining loan balance.
+   - Instant UPI payment QR code (`upi://pay?pa=...`) for monthly shares.
+5. **Treasurer Export Center**:
+   - 1-click CSV audit exports for monthly contributions, loan portfolios, and defaulters radar.
+6. **Installable PWA**:
+   - Native Android Chrome install prompt and guided iOS Safari instructions.
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### 1. Install Dependencies
 ```bash
@@ -37,25 +37,29 @@ npm install
 ```
 
 ### 2. Environment Variables
-Create a `.env` file from `.env.example`:
+Create a `.env` file based on `.env.example`:
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+VAPID_SUBJECT=mailto:admin@albadr-society.org
 ```
-*(Note: If Supabase credentials are not provided, the app automatically runs in offline/local storage demo mode with full persistence.)*
+*(See [docs/ENV_VARIABLES.md](docs/ENV_VARIABLES.md) for full setup instructions on Vercel.)*
 
 ### 3. Database Migration
-Run the SQL migration script in your Supabase SQL Editor:
+Run the consolidated single migration script in your Supabase SQL Editor:
 ```
-supabase/migrations/20261013000001_initial_schema.sql
+supabase/migrations/20261025000001_single_society_schema.sql
 ```
 
-### 4. Run Development Server
+### 4. Run Locally
 ```bash
 npm run dev
 ```
 
-### 5. Build for Production
+### 5. Production Build
 ```bash
 npm run build
 ```

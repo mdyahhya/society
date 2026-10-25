@@ -1,0 +1,628 @@
+import React, { useState } from 'react';
+import {
+  Printer,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  PlusCircle,
+  FileSpreadsheet,
+  AlertCircle,
+  Edit2,
+  Check,
+  X,
+  ShieldCheck,
+  ChevronDown,
+  UserCheck,
+} from 'lucide-react';
+import { useSociety } from '../../context/SocietyContext';
+import { formatINR } from '../../utils/formatters';
+import { LedgerEntry } from '../../types';
+
+export const RegisterView: React.FC = () => {
+  const {
+    activeLedger,
+    ledgers,
+    selectedPeriod,
+    setSelectedPeriod,
+    toggleLedgerEntryPaid,
+    updateLedgerEntry,
+    updateLedgerDisbursal,
+    addNewLedgerMonth,
+    isAdmin,
+    society,
+    currentUser,
+    openPasswordModal,
+    members,
+  } = useSociety();
+
+  const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+  const [editShare, setEditShare] = useState('300');
+  const [editInstallment, setEditInstallment] = useState('0');
+  const [editFine, setEditFine] = useState('0');
+  const [editLoanBal, setEditLoanBal] = useState('0');
+  const [editLoanApproved, setEditLoanApproved] = useState('0');
+
+  const [isNewMonthModalOpen, setIsNewMonthModalOpen] = useState(false);
+  const [newYear, setNewYear] = useState(2024);
+  const [newMonth, setNewMonth] = useState(11);
+  const [newLabel, setNewLabel] = useState('Nov - 24');
+
+  const handleOpenEdit = (entry: LedgerEntry) => {
+    if (!isAdmin) return;
+    setEditingEntry(entry);
+    setEditShare(String(entry.monthly_share));
+    setEditInstallment(String(entry.loan_installment));
+    setEditFine(String(entry.fine));
+    setEditLoanBal(String(entry.loan_balance_remaining));
+    setEditLoanApproved(String(entry.loan_approved));
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEntry) return;
+
+    await updateLedgerEntry(editingEntry.account_no, {
+      monthly_share: Number(editShare) || 300,
+      loan_installment: Number(editInstallment) || 0,
+      fine: Number(editFine) || 0,
+      loan_balance_remaining: Number(editLoanBal) || 0,
+      loan_approved: Number(editLoanApproved) || 0,
+    });
+
+    // If new loan approved, update disbursal
+    if (Number(editLoanApproved) > 0) {
+      await updateLedgerDisbursal(editingEntry.account_no, Number(editLoanApproved));
+    }
+
+    setEditingEntry(null);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCreateNewMonth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addNewLedgerMonth(newYear, newMonth, newLabel);
+    setIsNewMonthModalOpen(false);
+  };
+
+  if (!activeLedger) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+        <p className="text-sm font-semibold text-slate-600">नोंदवही रजिस्टर उपलब्ध नाही.</p>
+      </div>
+    );
+  }
+
+  // Calculate dynamic totals from entries
+  const totalSharesCollected = activeLedger.entries
+    .filter((e) => e.is_paid)
+    .reduce((sum, e) => sum + e.monthly_share, 0);
+
+  const totalInstallmentsCollected = activeLedger.entries
+    .filter((e) => e.is_paid)
+    .reduce((sum, e) => sum + e.loan_installment, 0);
+
+  const totalGrossCollected = totalSharesCollected + totalInstallmentsCollected;
+  const totalCashAvailable = activeLedger.previous_balance + totalGrossCollected;
+  const closingBalance = totalCashAvailable - activeLedger.loan_disbursed_amount;
+  const paidCount = activeLedger.entries.filter((e) => e.is_paid).length;
+
+  return (
+    <div className="space-y-6">
+      {/* =========================================================================
+          SCREEN HEADER & TOOLBAR (Hidden during print)
+         ========================================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden bg-slate-50/70 p-4 rounded-2xl border border-slate-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+              अधिकृत नोंदवही (Official Register)
+            </span>
+            <span className="text-xs text-slate-500 font-medium">
+              माहे {activeLedger.period_label}
+            </span>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mt-1">
+            मासिक नोंदवही रजिस्टर (Digital Register)
+          </h2>
+          <p className="text-xs text-slate-500">
+            प्रत्येक महिन्याचे जमा, कर्ज वाटप आणि ताळेबंद हिशोब पत्रक.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Period selector */}
+          <div className="relative">
+            <select
+              value={`${selectedPeriod.year}-${selectedPeriod.month}`}
+              onChange={(e) => {
+                const [y, m] = e.target.value.split('-').map(Number);
+                setSelectedPeriod({ year: y, month: m, monthName: activeLedger.period_label });
+              }}
+              className="appearance-none bg-white border border-slate-300 text-slate-800 text-xs font-semibold py-2 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-700 shadow-sm cursor-pointer"
+            >
+              {ledgers.map((l) => (
+                <option key={l.id} value={`${l.period_year}-${l.period_month}`}>
+                  {l.period_label} ({l.period_year})
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-2.5 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* New Month button (Admin only) */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setIsNewMonthModalOpen(true)}
+              className="py-2 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+            >
+              <PlusCircle size={15} className="text-emerald-700" />
+              <span>नवीन महिना</span>
+            </button>
+          )}
+
+          {/* Print A4 Sheet button */}
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="py-2 px-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+          >
+            <Printer size={15} />
+            <span>🖨️ A4 शीट प्रिंट करा (Print / PDF)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Screen Financial Stat Overview (Hidden during print) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 print:hidden">
+        <div className="p-3 bg-white rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            मासिक वर्गणी जमा
+          </span>
+          <p className="text-sm font-bold text-slate-900 mt-0.5">
+            {formatINR(totalSharesCollected)}
+          </p>
+          <span className="text-[10px] text-emerald-700 font-medium">
+            {paidCount} / 40 सभासद पूर्ण
+          </span>
+        </div>
+
+        <div className="p-3 bg-white rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            कर्ज हप्ते जमा
+          </span>
+          <p className="text-sm font-bold text-slate-900 mt-0.5">
+            {formatINR(totalInstallmentsCollected)}
+          </p>
+          <span className="text-[10px] text-slate-500 font-medium">नियमित मासिक परतावा</span>
+        </div>
+
+        <div className="p-3 bg-white rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            या महिन्याचे कर्ज वाटप
+          </span>
+          <p className="text-sm font-bold text-amber-700 mt-0.5">
+            {formatINR(activeLedger.loan_disbursed_amount)}
+          </p>
+          <span className="text-[10px] text-slate-500 font-medium">
+            {activeLedger.loan_disbursed_account_no
+              ? `अकौंट नं. ${activeLedger.loan_disbursed_account_no}`
+              : 'कोणतेही नाही'}
+          </span>
+        </div>
+
+        <div className="p-3 bg-white rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+            पुढील महिन्यासाठी शिल्लक
+          </span>
+          <p className="text-sm font-bold text-emerald-800 mt-0.5">
+            {formatINR(closingBalance)}
+          </p>
+          <span className="text-[10px] text-slate-500 font-medium">पुढील महिन्यात कॅरी फॉरवर्ड</span>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          PRINTABLE REGISTER SHEET CONTAINER
+          Specially styled for High-Density Single A4 Landscape Output
+         ========================================================================= */}
+      <div id="printable-register" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 print:p-0 print:border-none print:shadow-none shadow-sm">
+        {/* Printable Official Header */}
+        <div className="text-center pb-3 border-b-2 border-slate-800 mb-3">
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-wide font-serif">
+            {society.name}
+          </h1>
+          <p className="text-xs sm:text-sm font-semibold text-slate-700">
+            मासिक वर्गणी व बिनव्याजी कर्ज नोंदवही पत्रक - माहे {activeLedger.period_label}
+          </p>
+          <div className="flex justify-between items-center text-[10px] sm:text-xs text-slate-600 mt-1 px-1">
+            <span>सोलापूर, महाराष्ट्र</span>
+            <span>मासिक वर्गणी दर: ₹300/- दरमहा</span>
+            <span>तारीख: {new Date().toLocaleDateString('mr-IN')}</span>
+          </div>
+        </div>
+
+        {/* Register Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-[11px] print:text-[8.5pt]">
+            <thead>
+              <tr className="bg-slate-100 text-slate-800 border-y-2 border-slate-800 font-bold uppercase text-[9px] print:text-[8pt] tracking-wider">
+                <th className="py-1.5 px-1.5 text-center w-8 border border-slate-300">अ.नं.</th>
+                <th className="py-1.5 px-2 border border-slate-300">सभासदाचे नाव (Member Name)</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">मासिक वर्गणी</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">एकूण शेअर्स</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">कर्ज मंजूर</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">कर्जाचा हप्ता</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">येणे कर्ज बाकी</th>
+                <th className="py-1.5 px-1 text-center border border-slate-300">दंड</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300 font-extrabold">एकूण रुपये</th>
+                <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">स्थिती</th>
+                {isAdmin && <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">कृती</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {activeLedger.entries.map((entry) => {
+                const totalItem = entry.monthly_share + entry.loan_installment + (entry.fine || 0);
+                return (
+                  <tr
+                    key={entry.account_no}
+                    className={`border-b border-slate-200 hover:bg-slate-50 transition-colors ${
+                      entry.account_no % 2 === 0 ? 'bg-slate-50/40' : 'bg-white'
+                    }`}
+                  >
+                    <td className="py-1 px-1.5 text-center font-bold text-slate-800 border border-slate-200">
+                      {entry.account_no}
+                    </td>
+                    <td className="py-1 px-2 border border-slate-200 font-medium text-slate-900 whitespace-nowrap">
+                      <span>{entry.name_mr}</span>
+                      <span className="text-[10px] text-slate-400 ml-1.5 font-normal">
+                        ({entry.name_en})
+                      </span>
+                    </td>
+                    <td className="py-1 px-2 text-right font-medium text-slate-700 border border-slate-200">
+                      {entry.monthly_share.toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-1 px-2 text-right font-semibold text-slate-800 border border-slate-200">
+                      {entry.cumulative_shares > 0 ? entry.cumulative_shares.toLocaleString('en-IN') : '-'}
+                    </td>
+                    <td className="py-1 px-2 text-right font-bold text-amber-700 border border-slate-200">
+                      {entry.loan_approved > 0 ? entry.loan_approved.toLocaleString('en-IN') : '-'}
+                    </td>
+                    <td className="py-1 px-2 text-right font-medium text-slate-700 border border-slate-200">
+                      {entry.loan_installment > 0 ? entry.loan_installment.toLocaleString('en-IN') : '-'}
+                    </td>
+                    <td className="py-1 px-2 text-right font-semibold text-slate-800 border border-slate-200">
+                      {entry.loan_balance_remaining > 0 ? entry.loan_balance_remaining.toLocaleString('en-IN') : 'Nil'}
+                    </td>
+                    <td className="py-1 px-1 text-center text-slate-500 border border-slate-200">
+                      {entry.fine > 0 ? entry.fine : '-'}
+                    </td>
+                    <td className="py-1 px-2 text-right font-bold text-slate-900 border border-slate-200">
+                      {totalItem.toLocaleString('en-IN')}
+                    </td>
+
+                    {/* Paid Toggle / Badge (Screen only) */}
+                    <td className="py-1 px-1.5 text-center border border-slate-200 print:hidden">
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleLedgerEntryPaid(entry.account_no)}
+                          title={entry.is_paid ? 'भरणा पूर्ण (टॅप करून बदला)' : 'बाकी (टॅप करून जमा करा)'}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
+                            entry.is_paid
+                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                              : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                          }`}
+                        >
+                          {entry.is_paid ? 'जमा' : 'बाकी'}
+                        </button>
+                      ) : (
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            entry.is_paid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {entry.is_paid ? 'जमा' : 'बाकी'}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions (Admin only, screen only) */}
+                    {isAdmin && (
+                      <td className="py-1 px-1.5 text-center border border-slate-200 print:hidden">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(entry)}
+                          className="p-1 text-slate-500 hover:text-emerald-800 hover:bg-slate-100 rounded-md transition-colors"
+                          title="या नोंदीत बदल करा"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+
+            {/* Table Footer: Column Sums */}
+            <tfoot>
+              <tr className="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-b-2 border-slate-800">
+                <td colSpan={2} className="py-2 px-2 text-center border border-slate-300">
+                  एकूण बेरीज (TOTAL)
+                </td>
+                <td className="py-2 px-2 text-right border border-slate-300">
+                  ₹{totalSharesCollected.toLocaleString('en-IN')}
+                </td>
+                <td className="py-2 px-2 text-right border border-slate-300">-</td>
+                <td className="py-2 px-2 text-right border border-slate-300 text-amber-800">
+                  {activeLedger.loan_disbursed_amount > 0
+                    ? `₹${activeLedger.loan_disbursed_amount.toLocaleString('en-IN')}`
+                    : '-'}
+                </td>
+                <td className="py-2 px-2 text-right border border-slate-300">
+                  ₹{totalInstallmentsCollected.toLocaleString('en-IN')}
+                </td>
+                <td className="py-2 px-2 text-right border border-slate-300">-</td>
+                <td className="py-2 px-1 text-center border border-slate-300">-</td>
+                <td className="py-2 px-2 text-right border border-slate-300 text-emerald-900">
+                  ₹{totalGrossCollected.toLocaleString('en-IN')}
+                </td>
+                <td className="py-2 px-1 text-center border border-slate-300 print:hidden">
+                  {paidCount}/40
+                </td>
+                {isAdmin && <td className="print:hidden border border-slate-300"></td>}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* =========================================================================
+            MONTHLY CASH RECONCILIATION SUMMARY (Bottom of Image 2)
+           ========================================================================= */}
+        <div className="mt-4 pt-3 border-t-2 border-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs print:text-[8pt]">
+            <div className="p-3 bg-slate-50 border border-slate-300 rounded-xl space-y-1">
+              <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1 mb-1.5 uppercase tracking-wide">
+                मासिक जमा व रोख ताळेबंद (Cash Reconciliation)
+              </h4>
+              <div className="flex justify-between py-0.5">
+                <span className="text-slate-600">मासिक शेअर्स जमा (40 सभासद × ₹300):</span>
+                <span className="font-semibold text-slate-900">₹{totalSharesCollected.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-0.5">
+                <span className="text-slate-600">कर्ज हप्ते जमा:</span>
+                <span className="font-semibold text-slate-900">₹{totalInstallmentsCollected.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-0.5 font-bold border-t border-slate-200 pt-1">
+                <span>एकूण जमा (Total Collection):</span>
+                <span className="text-emerald-800">₹{totalGrossCollected.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-0.5">
+                <span className="text-slate-600">मागील महिना शिल्लक (Carried Forward):</span>
+                <span className="font-semibold text-slate-900">₹{activeLedger.previous_balance.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-0.5 font-bold text-emerald-900 border-t border-slate-300 pt-1">
+                <span>एकूण उपलब्ध शिल्लक (Total Available Cash):</span>
+                <span>₹{totalCashAvailable.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-0.5 text-amber-900 font-semibold">
+                <span>
+                  नवीन कर्ज वाटप{' '}
+                  {activeLedger.loan_disbursed_account_no ? `(अकौंट #${activeLedger.loan_disbursed_account_no})` : ''}:
+                </span>
+                <span>- ₹{activeLedger.loan_disbursed_amount.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between py-1 font-extrabold text-sm border-t-2 border-slate-800 text-slate-900 pt-1">
+                <span>पुढील महिन्यासाठी शिल्लक (Current Balance Transfer):</span>
+                <span>₹{closingBalance.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            {/* Official Signatures Box */}
+            <div className="flex flex-col justify-between p-3 border border-slate-300 rounded-xl bg-slate-50/50">
+              <div>
+                <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1 mb-2 uppercase tracking-wide">
+                  प्रमाणपत्र व स्वाक्षरी (Certifications)
+                </h4>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  माहे {activeLedger.period_label} चे वरील सर्व 40 सभासदांचे शेअर्स, कर्ज हप्ते व ताळेबंद हिशोब पूर्णपणे तपासले असून योग्य व बरोबर असल्याचे प्रमाणित करण्यात येत आहे.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-6 mt-4 border-t border-slate-300 text-center font-bold text-slate-800">
+                <div>
+                  <div className="h-8 border-b border-dashed border-slate-400"></div>
+                  <span className="text-[11px] block mt-1">सेक्रेटरी / व्यवस्थापक</span>
+                  <span className="text-[9px] text-slate-500 font-normal">Secretary / Manager</span>
+                </div>
+                <div>
+                  <div className="h-8 border-b border-dashed border-slate-400"></div>
+                  <span className="text-[11px] block mt-1">अध्यक्ष / खजिनदार</span>
+                  <span className="text-[9px] text-slate-500 font-normal">President / Treasurer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Entry Modal */}
+      {editingEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-sm font-bold text-slate-900">
+                नोंद संपादन: #{editingEntry.account_no} {editingEntry.name_mr}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingEntry(null)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    मासिक वर्गणी (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editShare}
+                    onChange={(e) => setEditShare(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    कर्जाचा हप्ता (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editInstallment}
+                    onChange={(e) => setEditInstallment(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    येणे कर्ज बाकी (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editLoanBal}
+                    onChange={(e) => setEditLoanBal(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    दंड / लेट फी (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editFine}
+                    onChange={(e) => setEditFine(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  नवीन कर्ज मंजूर (या महिन्यात वाटप)
+                </label>
+                <input
+                  type="number"
+                  value={editLoanApproved}
+                  onChange={(e) => setEditLoanApproved(e.target.value)}
+                  placeholder="उदा. 180000"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingEntry(null)}
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+                >
+                  रद्द करा
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold"
+                >
+                  बदल जतन करा
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Month Modal */}
+      {isNewMonthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-sm font-bold text-slate-900">नवीन महिना रजिस्टर तयार करा</h3>
+              <button
+                type="button"
+                onClick={() => setIsNewMonthModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewMonth} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">वर्ष (Year)</label>
+                <input
+                  type="number"
+                  value={newYear}
+                  onChange={(e) => setNewYear(parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">महिना (Month 1-12)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={newMonth}
+                  onChange={(e) => setNewMonth(parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">नाव / लेबल</label>
+                <input
+                  type="text"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="उदा. Nov - 24"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
+                />
+              </div>
+
+              <div className="p-2.5 bg-emerald-50 text-emerald-800 text-[11px] rounded-xl border border-emerald-200">
+                मागील महिन्याची उर्वरित शिल्लक (₹{closingBalance.toLocaleString('en-IN')}) नवीन महिन्यात स्वयंचलितरित्या सुरुवातीची शिल्लक म्हणून ट्रान्सफर केली जाईल.
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsNewMonthModalOpen(false)}
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+                >
+                  रद्द करा
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold"
+                >
+                  तयार करा
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

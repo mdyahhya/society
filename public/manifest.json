@@ -1,7 +1,7 @@
 {
-  "name": "Qarz-e-Hasan Society Management",
-  "short_name": "No-Interest Society",
-  "description": "Multi-Tenant Mobile-First Qarz-e-Hasan No-Interest Welfare Society Management PWA",
+  "name": "अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर",
+  "short_name": "अल-बदर सोसायटी",
+  "description": "अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर - परस्पर सहाय्य व बिनव्याजी संस्था",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

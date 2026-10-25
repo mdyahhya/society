@@ -12,6 +12,7 @@ export const translations = {
     // Navigation
     'nav.home': 'Home',
     'nav.members': 'Members',
+    'nav.register': 'Monthly Register',
     'nav.loans': 'Loans',
     'nav.manage': 'Settings',
 
@@ -176,6 +177,7 @@ export const translations = {
     // Navigation
     'nav.home': 'ہوم',
     'nav.members': 'ارکان',
+    'nav.register': 'ماہانہ رجسٹر',
     'nav.loans': 'قرضے',
     'nav.manage': 'سیٹنگز',
 
@@ -340,6 +342,7 @@ export const translations = {
     // Navigation
     'nav.home': 'होम',
     'nav.members': 'सदस्य',
+    'nav.register': 'मासिक रजिस्टर',
     'nav.loans': 'क़र्ज़',
     'nav.manage': 'सेटिंग्स',
 
@@ -504,6 +507,7 @@ export const translations = {
     // Navigation
     'nav.home': 'मुख्य पान',
     'nav.members': 'सदस्य',
+    'nav.register': 'मासिक नोंदवही',
     'nav.loans': 'कर्ज',
     'nav.manage': 'सेटिंग्ज',
 

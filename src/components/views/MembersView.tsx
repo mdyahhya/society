@@ -12,26 +12,24 @@ import {
   Clock,
   Trash2,
   Edit2,
-  Calendar,
-  X,
+  KeyRound,
+  ShieldAlert,
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
-import { Member, Contribution } from '../../types';
+import { Member } from '../../types';
 import {
   formatINR,
   formatDate,
   formatPhone,
   getCurrentPeriod,
-  getMonthName,
 } from '../../utils/formatters';
 import { getLocalizedMonthName } from '../../i18n/translations';
 import { Modal } from '../common/Modal';
+import { MemberFormModal } from '../modals/MemberFormModal';
 
 export const MembersView: React.FC = () => {
   const {
     members,
-    addMember,
-    updateMember,
     deleteMember,
     isMemberPaidInPeriod,
     getMemberActiveLoan,
@@ -43,35 +41,29 @@ export const MembersView: React.FC = () => {
     society,
     selectedMemberForDetail,
     setSelectedMemberForDetail,
-    isAddMemberModalOpen,
-    setIsAddMemberModalOpen,
-    openAddMemberModal,
     openMemberDetail,
+    isAdmin,
+    openPasswordModal,
     t,
     appLanguage,
   } = useSociety();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'paid' | 'unpaid' | 'loan'>('all');
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-
-  // Form states
-  const [formName, setFormName] = useState('');
-  const [formPhone, setFormPhone] = useState('');
-  const [formMemberNo, setFormMemberNo] = useState('');
-  const [formMonthlyShare, setFormMonthlyShare] = useState('2000');
-  const [formJoinDate, setFormJoinDate] = useState(new Date().toISOString().split('T')[0]);
-  const [formAddress, setFormAddress] = useState('');
-  const [formNotes, setFormNotes] = useState('');
-
-  const currentPeriod = getCurrentPeriod();
+  const [isMemberFormOpen, setIsMemberFormOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
 
   // Filtered members list
   const filteredMembers = members.filter((m) => {
+    const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.name.toLowerCase().includes(searchLower) ||
+      (m.name_mr && m.name_mr.includes(searchQuery)) ||
+      (m.name_en && m.name_en.toLowerCase().includes(searchLower)) ||
       m.phone.includes(searchQuery) ||
-      m.member_no.toLowerCase().includes(searchQuery.toLowerCase());
+      String(m.account_no) === searchQuery ||
+      m.member_no.toLowerCase().includes(searchLower);
+
     if (!matchesSearch) return false;
 
     const isPaid = isMemberPaidInPeriod(m.id, selectedPeriod.year, selectedPeriod.month);
@@ -84,61 +76,17 @@ export const MembersView: React.FC = () => {
   });
 
   const handleOpenAdd = () => {
-    setEditingMember(null);
-    setFormName('');
-    setFormPhone('');
-    setFormMemberNo(`M-${String(members.length + 101)}`);
-    setFormMonthlyShare('2000');
-    setFormJoinDate(new Date().toISOString().split('T')[0]);
-    setFormAddress('');
-    setFormNotes('');
-    openAddMemberModal();
+    setMemberToEdit(null);
+    setIsMemberFormOpen(true);
   };
 
   const handleOpenEdit = (m: Member) => {
-    setEditingMember(m);
-    setFormName(m.name);
-    setFormPhone(m.phone);
-    setFormMemberNo(m.member_no);
-    setFormMonthlyShare(String(m.monthly_share));
-    setFormJoinDate(m.join_date);
-    setFormAddress(m.address || '');
-    setFormNotes(m.notes || '');
-    openAddMemberModal();
-  };
-
-  const handleSaveMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formName || !formPhone || !formMonthlyShare) return;
-
-    if (editingMember) {
-      await updateMember(editingMember.id, {
-        name: formName,
-        phone: formPhone,
-        member_no: formMemberNo,
-        monthly_share: Number(formMonthlyShare),
-        join_date: formJoinDate,
-        address: formAddress || undefined,
-        notes: formNotes || undefined,
-      });
-    } else {
-      await addMember({
-        name: formName,
-        phone: formPhone,
-        member_no: formMemberNo,
-        monthly_share: Number(formMonthlyShare),
-        join_date: formJoinDate,
-        status: 'active',
-        address: formAddress || undefined,
-        notes: formNotes || undefined,
-      });
-    }
-
-    setIsAddMemberModalOpen(false);
+    setMemberToEdit(m);
+    setIsMemberFormOpen(true);
   };
 
   const handleDeleteMember = async (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete member ${name}? This action cannot be undone.`)) {
+    if (window.confirm(`तुम्हाला खात्री आहे का की सभासद "${name}" यांना काढून टाकायचे आहे?`)) {
       await deleteMember(id);
       if (selectedMemberForDetail?.id === id) {
         setSelectedMemberForDetail(null);
@@ -148,64 +96,89 @@ export const MembersView: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-20 md:pb-6">
-      {/* Header & Add Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with Title and Add Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('members.title', 'Society Members')}</h2>
-          <p className="text-xs text-slate-500">{members.length} {t('home.membersCount', 'registered members')}</p>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            सभासद सूची (Members Directory)
+          </h2>
+          <p className="text-xs text-slate-500">
+            एकूण {members.length} सभासद • अकौंट नं. 1 ते 40 • मासिक वर्गणी ₹300/-
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="px-3.5 py-2 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-        >
-          <UserPlus size={15} />
-          <span>{t('members.addMember', 'Add Member')}</span>
-        </button>
-      </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t('members.searchPlaceholder', 'Search by name, phone, or member #...')}
-          className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-        />
-      </div>
-
-      {/* Filter Chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1 text-xs">
-        {[
-          { key: 'all', label: `${t('members.filterAll', 'All')} (${members.length})` },
-          { key: 'paid', label: `${t('members.filterPaid', 'Paid')} ${getLocalizedMonthName(selectedPeriod.month, appLanguage)}` },
-          { key: 'unpaid', label: t('members.filterUnpaid', 'Unpaid') },
-          { key: 'loan', label: t('members.filterLoan', 'On Loan') },
-        ].map((f) => (
+        {isAdmin && (
           <button
-            key={f.key}
             type="button"
-            onClick={() => setFilter(f.key as any)}
-            className={`px-3 py-1.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              filter === f.key
-                ? 'bg-forest-800 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            onClick={handleOpenAdd}
+            className="py-2 px-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+          >
+            <UserPlus size={15} />
+            <span>नवीन सभासद जोडा</span>
+          </button>
+        )}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="नाव, अकौंट नं. (1-40), किंवा मोबाईल नंबर शोधा..."
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          />
+        </div>
+
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 overflow-x-auto text-[11px] font-bold">
+          <button
+            type="button"
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              filter === 'all' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'
             }`}
           >
-            {f.label}
+            सर्व ({members.length})
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => setFilter('paid')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              filter === 'paid' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'
+            }`}
+          >
+            वर्गणी भरलेले
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('unpaid')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              filter === 'unpaid' ? 'bg-white text-amber-800 shadow-sm' : 'text-slate-600'
+            }`}
+          >
+            बाकीदार
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('loan')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              filter === 'loan' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+            }`}
+          >
+            कर्जदार
+          </button>
+        </div>
       </div>
 
-      {/* Members List */}
-      <div className="space-y-3">
+      {/* Members List Cards */}
+      <div className="space-y-2.5">
         {filteredMembers.length === 0 ? (
-          <div className="p-8 text-center bg-white border border-slate-200 rounded-3xl">
+          <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl">
             <Users size={32} className="mx-auto text-slate-300 mb-2" />
-            <p className="text-sm font-semibold text-slate-700">No members match your criteria</p>
-            <p className="text-xs text-slate-500 mt-1">Try adjusting the filter or search keyword.</p>
+            <p className="text-sm font-semibold text-slate-700">कोणतेही सभासद सापडले नाहीत</p>
+            <p className="text-xs text-slate-500 mt-1">कृपया शोध शब्द किंवा फिल्टर बदलून पहा.</p>
           </div>
         ) : (
           filteredMembers.map((member) => {
@@ -215,24 +188,35 @@ export const MembersView: React.FC = () => {
             return (
               <div
                 key={member.id}
-                className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-sm hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
+                {/* Member Identity Details */}
                 <div
                   className="cursor-pointer flex-1"
                   onClick={() => openMemberDetail(member)}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono">
-                      {member.member_no}
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono">
+                      #{member.account_no}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-900 hover:text-forest-800 transition-colors">
-                      {member.name}
+                    <h3 className="text-sm font-bold text-slate-900 hover:text-emerald-800 transition-colors">
+                      {member.name_mr || member.name}
                     </h3>
+                    {member.name_en && (
+                      <span className="text-xs text-slate-400 font-normal">
+                        ({member.name_en})
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span>{formatPhone(member.phone)}</span>
-                    <span>{t('members.share', 'Share')}: <strong className="text-slate-800">{formatINR(member.monthly_share)}/mo</strong></span>
+                    <span className="font-mono">{formatPhone(member.phone)}</span>
+                    <span>
+                      मासिक वर्गणी: <strong className="text-slate-800 font-semibold">{formatINR(member.monthly_share)}</strong>
+                    </span>
+                    <span>
+                      जमा शेअर्स: <strong className="text-emerald-800 font-bold">{formatINR(member.cumulative_shares || 0)}</strong>
+                    </span>
                   </div>
 
                   {/* Status Badges */}
@@ -240,35 +224,37 @@ export const MembersView: React.FC = () => {
                     {isPaid ? (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                         <CheckCircle2 size={11} />
-                        <span>{t('members.paidFor', 'Paid for')} {getLocalizedMonthName(selectedPeriod.month, appLanguage)}</span>
+                        <span>वर्गणी जमा ({getLocalizedMonthName(selectedPeriod.month, appLanguage)})</span>
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
                         <Clock size={11} />
-                        <span>{t('members.unpaidFor', 'Unpaid for')} {getLocalizedMonthName(selectedPeriod.month, appLanguage)}</span>
+                        <span>वर्गणी बाकी ({getLocalizedMonthName(selectedPeriod.month, appLanguage)})</span>
                       </span>
                     )}
 
                     {activeLoan && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 flex items-center gap-1">
                         <HandCoins size={11} />
-                        <span>{t('members.loanBal', 'Loan Bal')}: {formatINR(activeLoan.remaining_balance)}</span>
+                        <span>कर्ज बाकी: {formatINR(activeLoan.remaining_balance)}</span>
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Member Card Quick Action Buttons */}
+                {/* Actions */}
                 <div className="flex items-center gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  {/* WhatsApp Reminder Trigger */}
+                  {/* WhatsApp Reminder Button */}
                   <button
                     type="button"
                     onClick={() => {
-                      const loanDue = activeLoan ? Math.min(activeLoan.monthly_installment, activeLoan.remaining_balance) : 0;
+                      const loanDue = activeLoan
+                        ? Math.min(activeLoan.monthly_installment, activeLoan.remaining_balance)
+                        : 0;
                       const shareDue = isPaid ? 0 : member.monthly_share;
                       openWhatsAppModal({
                         memberId: member.id,
-                        memberName: member.name,
+                        memberName: member.name_mr || member.name,
                         memberPhone: member.phone,
                         societyName: society.name,
                         monthName: selectedPeriod.monthName,
@@ -280,29 +266,60 @@ export const MembersView: React.FC = () => {
                       });
                     }}
                     className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
-                    title={t('members.remind', 'Send WhatsApp Reminder')}
+                    title="WhatsApp आठवण मेसेज पाठवा"
                   >
-                    <MessageSquare size={16} />
+                    <MessageSquare size={15} />
                   </button>
 
-                  {/* Direct Log Pay */}
+                  {/* Quick Contribution / Pay */}
                   {!isPaid && (
                     <button
                       type="button"
                       onClick={() => openCreateModal('contribution')}
-                      className="px-2.5 py-1.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold flex items-center gap-1 transition-colors"
                     >
                       <CreditCard size={13} />
-                      <span>{t('members.logPay', 'Log')}</span>
+                      <span>नोंदवा</span>
                     </button>
                   )}
 
-                  {/* View Details Chevron */}
+                  {/* Admin Controls: Edit, Password, Delete */}
+                  {isAdmin && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(member)}
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
+                        title="सभासद माहिती बदला (Edit)"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openPasswordModal({ type: 'member', member })}
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-amber-700 border border-slate-200 transition-colors"
+                        title="पासवर्ड / पिन बदला (Change PIN)"
+                      >
+                        <KeyRound size={14} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMember(member.id, member.name)}
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
+                        title="सभासद काढा (Delete)"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Chevron to view ledger */}
                   <button
                     type="button"
                     onClick={() => openMemberDetail(member)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-slate-800 transition-colors"
-                    aria-label="View member ledger"
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 transition-colors"
                   >
                     <ChevronRight size={18} />
                   </button>
@@ -313,138 +330,20 @@ export const MembersView: React.FC = () => {
         )}
       </div>
 
-      {/* Add / Edit Member Modal */}
-      <Modal
-        isOpen={isAddMemberModalOpen}
-        onClose={() => setIsAddMemberModalOpen(false)}
-        title={editingMember ? t('members.editMember', 'Edit Member Profile') : t('members.addNew', 'Add New Member')}
-        subtitle={t('members.subtitle', 'Community member record for monthly shares')}
-        maxWidth="md"
-      >
-        <form onSubmit={handleSaveMember} className="space-y-3.5">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                {t('members.memberNo', 'Member Number')} *
-              </label>
-              <input
-                type="text"
-                required
-                value={formMemberNo}
-                onChange={(e) => setFormMemberNo(e.target.value)}
-                placeholder="e.g. M-109"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                {t('members.monthlyShare', 'Monthly Share (₹)')} *
-              </label>
-              <input
-                type="number"
-                required
-                min="100"
-                step="100"
-                value={formMonthlyShare}
-                onChange={(e) => setFormMonthlyShare(e.target.value)}
-                placeholder="e.g. 2000"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('members.name', 'Full Name')} *
-            </label>
-            <input
-              type="text"
-              required
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="e.g. Tariq Anwar"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                {t('members.phone', 'Mobile Number (10 digits)')} *
-              </label>
-              <input
-                type="tel"
-                required
-                value={formPhone}
-                onChange={(e) => setFormPhone(e.target.value)}
-                placeholder="9876543210"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                {t('members.joiningDate', 'Joining Date')}
-              </label>
-              <input
-                type="date"
-                value={formJoinDate}
-                onChange={(e) => setFormJoinDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('members.address', 'Address (Optional)')}
-            </label>
-            <input
-              type="text"
-              value={formAddress}
-              onChange={(e) => setFormAddress(e.target.value)}
-              placeholder="e.g. House 42, Civil Lines"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('members.notes', 'Notes (Optional)')}
-            </label>
-            <input
-              type="text"
-              value={formNotes}
-              onChange={(e) => setFormNotes(e.target.value)}
-              placeholder="e.g. Nominee or guarantor information"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-800"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsAddMemberModalOpen(false)}
-              className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold"
-            >
-              {t('manage.cancel', 'Cancel')}
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-2.5 px-4 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-sm font-semibold transition-colors shadow-sm"
-            >
-              {editingMember ? t('members.save', 'Save Changes') : t('members.addMember', 'Create Member')}
-            </button>
-          </div>
-        </form>
-      </Modal>
+      {/* Member Form Modal (Add / Edit) */}
+      <MemberFormModal
+        isOpen={isMemberFormOpen}
+        onClose={() => setIsMemberFormOpen(false)}
+        memberToEdit={memberToEdit}
+      />
 
       {/* Member Details Drawer Modal */}
       {selectedMemberForDetail && (
         <Modal
           isOpen={Boolean(selectedMemberForDetail)}
           onClose={() => setSelectedMemberForDetail(null)}
-          title={selectedMemberForDetail.name}
-          subtitle={`Member No: ${selectedMemberForDetail.member_no} • Joined ${formatDate(selectedMemberForDetail.join_date)}`}
+          title={`#${selectedMemberForDetail.account_no} ${selectedMemberForDetail.name_mr || selectedMemberForDetail.name}`}
+          subtitle={`अकौंट नं. ${selectedMemberForDetail.account_no} • सामील: ${formatDate(selectedMemberForDetail.join_date)}`}
           maxWidth="lg"
         >
           {(() => {
@@ -459,127 +358,85 @@ export const MembersView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[11px] font-semibold text-slate-500 block">
-                      Lifetime Contributions
+                      एकूण जमा शेअर्स
                     </span>
-                    <span className="text-base font-bold text-forest-800">
-                      {formatINR(totalContributed)}
+                    <span className="text-base font-bold text-emerald-800">
+                      {formatINR((selectedMemberForDetail.cumulative_shares || 0) + totalContributed)}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[11px] font-semibold text-slate-500 block">
-                      Active Loan Balance
+                      चालू कर्ज बाकी
                     </span>
                     <span className="text-base font-bold text-slate-900">
-                      {activeLoan ? formatINR(activeLoan.remaining_balance) : 'Nil'}
+                      {activeLoan ? formatINR(activeLoan.remaining_balance) : 'Nil (कोणतेही कर्ज नाही)'}
                     </span>
                   </div>
                 </div>
 
-                {/* Active Loan Details if any */}
+                {/* Login Credentials Box (Visible to Admin or that Member) */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-slate-500 font-medium">लॉगिन क्रेडेंशियल्स:</span>
+                    <p className="font-bold text-slate-900 mt-0.5">
+                      युझर / फोन: {selectedMemberForDetail.phone} • पिन: {selectedMemberForDetail.password || '1234'}
+                    </p>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openPasswordModal({ type: 'member', member: selectedMemberForDetail })
+                      }
+                      className="px-2.5 py-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-semibold"
+                    >
+                      पिन बदला
+                    </button>
+                  )}
+                </div>
+
+                {/* Active Loan Details */}
                 {activeLoan && (
                   <div className="p-3 bg-amber-50/50 border border-amber-200 rounded-xl space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-amber-900">Active Qarz-e-Hasan ({activeLoan.loan_no})</span>
-                      <span className="font-semibold text-amber-800">
-                        Monthly Inst: {formatINR(activeLoan.monthly_installment)}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-900">सक्रिय कर्ज तपशील</span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
+                        हप्ता: {formatINR(activeLoan.monthly_installment)}/महिना
                       </span>
                     </div>
-                    <div className="w-full bg-amber-200/60 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-amber-600 h-full rounded-full"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.round(
-                              ((activeLoan.principal_amount - activeLoan.remaining_balance) /
-                                activeLoan.principal_amount) *
-                                100
-                            )
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[11px] text-amber-800">
-                      <span>Repaid: {formatINR(activeLoan.principal_amount - activeLoan.remaining_balance)}</span>
-                      <span>Total: {formatINR(activeLoan.principal_amount)}</span>
+                    <div className="flex justify-between text-xs text-slate-700">
+                      <span>मंजूर रक्कम: <strong>{formatINR(activeLoan.principal_amount)}</strong></span>
+                      <span>उर्वरित बाकी: <strong className="text-amber-800">{formatINR(activeLoan.remaining_balance)}</strong></span>
                     </div>
                   </div>
                 )}
 
-                {/* Contribution History Ledger */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
-                    Contribution History ({memberHistory.length} recorded)
-                  </h4>
-                  {memberHistory.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic p-3 text-center bg-slate-50 rounded-xl">
-                      No contribution records yet.
-                    </p>
-                  ) : (
-                    <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
-                      {memberHistory.map((c) => (
-                        <div key={c.id} className="p-2.5 flex items-center justify-between text-xs">
-                          <div>
-                            <span className="font-semibold text-slate-900 block">
-                              {getMonthName(c.period_month)} {c.period_year}
-                            </span>
-                            <span className="text-[11px] text-slate-500">
-                              Paid on {formatDate(c.payment_date)} via {c.payment_method.toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="font-bold text-forest-800">{formatINR(c.amount)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex gap-2 pt-2 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => handleDeleteMember(selectedMemberForDetail.id, selectedMemberForDetail.name)}
-                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-xs font-semibold flex items-center gap-1"
+                    onClick={() => {
+                      setSelectedMemberForDetail(null);
+                      openCreateModal('contribution');
+                    }}
+                    className="flex-1 py-2 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    <Trash2 size={15} />
-                    <span>Delete</span>
+                    <CreditCard size={14} />
+                    <span>वर्गणी नोंदवा</span>
                   </button>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleOpenEdit(selectedMemberForDetail);
-                        setSelectedMemberForDetail(null);
-                      }}
-                      className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1"
-                    >
-                      <Edit2 size={14} />
-                      <span>Edit</span>
-                    </button>
+                  {isAdmin && (
                     <button
                       type="button"
                       onClick={() => {
                         const m = selectedMemberForDetail;
                         setSelectedMemberForDetail(null);
-                        openWhatsAppModal({
-                          memberId: m.id,
-                          memberName: m.name,
-                          memberPhone: m.phone,
-                          societyName: society.name,
-                          monthName: selectedPeriod.monthName,
-                          monthNumber: selectedPeriod.month,
-                          monthlyShareDue: m.monthly_share,
-                          totalDue: m.monthly_share,
-                          upiId: society.upi_id,
-                        });
+                        handleOpenEdit(m);
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-forest-800 text-white text-xs font-semibold flex items-center gap-1"
+                      className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
                     >
-                      <MessageSquare size={14} />
-                      <span>WhatsApp</span>
+                      माहिती संपादन
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
             );

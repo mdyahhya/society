@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Home,
   Users,
@@ -5,15 +6,17 @@ import {
   HandCoins,
   Settings,
   QrCode,
-  Calendar,
   ChevronDown,
-  Building2,
   ShieldCheck,
   ArrowLeft,
   Globe2,
+  BookOpen,
+  Bell,
+  BellRing,
+  Download,
+  User,
 } from 'lucide-react';
-import { useSociety } from '../../context/SocietyContext';
-import { getCurrentPeriod } from '../../utils/formatters';
+import { useSociety, NavigationTab } from '../../context/SocietyContext';
 import { APP_LANGUAGES, getLocalizedMonthName } from '../../i18n/translations';
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,19 +31,33 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     t,
     appLanguage,
     setAppLanguage,
+    currentUser,
+    setIsLoginModalOpen,
+    isPushSubscribed,
+    subscribeToPushNotifications,
+    triggerPwaInstall,
   } = useSociety();
 
-  const currentPeriod = getCurrentPeriod();
-
   // Navigation Items translated
-  const navItems = [
-    { key: 'home' as const, label: t('nav.home'), icon: Home },
-    { key: 'members' as const, label: t('nav.members'), icon: Users },
-    // Center [+] is special
-    { key: 'create' as const, label: t('header.quickAction'), icon: PlusCircle, isAction: true },
-    { key: 'loans' as const, label: t('nav.loans'), icon: HandCoins },
-    { key: 'manage' as const, label: t('nav.manage'), icon: Settings },
+  const navItems: Array<{
+    key: NavigationTab | 'create';
+    label: string;
+    icon: any;
+    isAction?: boolean;
+  }> = [
+    { key: 'home', label: t('nav.home'), icon: Home },
+    { key: 'members', label: t('nav.members'), icon: Users },
+    { key: 'register', label: t('nav.register', 'नोंदवही'), icon: BookOpen },
+    { key: 'create', label: t('header.quickAction'), icon: PlusCircle, isAction: true },
+    { key: 'loans', label: t('nav.loans'), icon: HandCoins },
+    { key: 'manage', label: t('nav.manage'), icon: Settings },
   ];
+
+  const handleTogglePush = async () => {
+    if (!isPushSubscribed) {
+      await subscribeToPushNotifications();
+    }
+  };
 
   return (
     <div
@@ -57,11 +74,11 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             onClick={() => navigateToTab('home')}
             className="flex items-center gap-3 px-2 py-1 cursor-pointer hover:opacity-90 transition-opacity"
           >
-            <div className="w-10 h-10 rounded-2xl bg-forest-800 text-white flex items-center justify-center shadow-sm">
-              <ShieldCheck size={22} />
+            <div className="w-10 h-10 rounded-2xl bg-emerald-800 text-white flex items-center justify-center shadow-sm font-bold text-base">
+              अ
             </div>
             <div className="overflow-hidden">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-forest-800 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
                 {t('header.tagline')}
               </span>
               <h1 className="text-sm font-bold text-slate-900 truncate" title={society.name}>
@@ -70,11 +87,37 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
           </div>
 
+          {/* User Account / Role Pill */}
+          <div className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                currentUser?.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                {currentUser?.role === 'admin' ? '👑' : <User size={13} />}
+              </div>
+              <div className="overflow-hidden">
+                <p className="font-bold text-slate-900 truncate text-[11px]">
+                  {currentUser ? currentUser.full_name : 'अतिथी (Guest)'}
+                </p>
+                <p className="text-[10px] text-slate-500 capitalize">
+                  {currentUser?.role === 'admin' ? 'सेक्रेटरी / ॲडमिन' : currentUser ? `अकौंट #${currentUser.account_no}` : 'पहा मोड'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsLoginModalOpen(true)}
+              className="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors"
+            >
+              {currentUser ? 'बदला' : 'लॉगिन'}
+            </button>
+          </div>
+
           {/* Quick Create Action Button */}
           <button
             type="button"
             onClick={() => openCreateModal('contribution')}
-            className="w-full py-2.5 px-4 rounded-2xl bg-forest-800 hover:bg-forest-900 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+            className="w-full py-2.5 px-4 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
           >
             <PlusCircle size={16} />
             <span>{t('header.quickAction')}</span>
@@ -91,14 +134,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => navigateToTab(item.key as any)}
+                    onClick={() => navigateToTab(item.key as NavigationTab)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                       isActive
-                        ? 'bg-forest-800 text-white shadow-sm'
+                        ? 'bg-emerald-800 text-white shadow-sm font-bold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
-                    <Icon size={18} />
+                    <Icon size={17} />
                     <span>{item.label}</span>
                   </button>
                 );
@@ -108,10 +151,34 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
         {/* Footer info in desktop sidebar */}
         <div className="p-3 bg-white border border-slate-200 rounded-2xl text-[11px] space-y-2">
+          {/* PWA & Push Quick actions */}
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={handleTogglePush}
+              title={isPushSubscribed ? 'Web Push सूचना सक्रिय आहेत' : 'Web Push सूचना सुरू करा'}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                isPushSubscribed ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {isPushSubscribed ? <BellRing size={12} className="text-emerald-700" /> : <Bell size={12} />}
+              <span>{isPushSubscribed ? 'सूचना चालू' : 'सूचना घ्या'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={triggerPwaInstall}
+              title="Install App"
+              className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1"
+            >
+              <Download size={12} />
+              <span>इन्स्टॉल</span>
+            </button>
+          </div>
+
           {/* Language Switcher pill in sidebar */}
-          <div className="flex items-center justify-between text-slate-500 font-semibold text-[11px]">
+          <div className="flex items-center justify-between text-slate-500 font-semibold text-[11px] pt-1 border-t border-slate-100">
             <span className="flex items-center gap-1">
-              <Globe2 size={13} className="text-forest-800" />
+              <Globe2 size={13} className="text-emerald-800" />
               <span>{t('manage.appLanguage')}</span>
             </span>
             <select
@@ -132,7 +199,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <button
               type="button"
               onClick={() => openQrModal()}
-              className="text-forest-800 hover:underline"
+              className="text-emerald-800 hover:underline"
             >
               {t('manage.showQr')}
             </button>
@@ -163,12 +230,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 <span className="text-xs font-semibold hidden sm:inline">{t('header.home')}</span>
               </button>
             ) : (
-              <div className="md:hidden w-8 h-8 rounded-xl bg-forest-800 text-white flex items-center justify-center shrink-0">
-                <ShieldCheck size={18} />
+              <div className="md:hidden w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 font-bold text-sm">
+                अ
               </div>
             )}
             <div className="min-w-0">
-              <span className="text-[10px] font-bold text-forest-800 uppercase tracking-wider block leading-none truncate">
+              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate">
                 {society.name}
               </span>
               <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
@@ -176,6 +243,8 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   ? t('nav.home')
                   : activeTab === 'members'
                   ? t('nav.members')
+                  : activeTab === 'register'
+                  ? t('nav.register', 'नोंदवही')
                   : activeTab === 'loans'
                   ? t('nav.loans')
                   : t('nav.manage')}
@@ -183,16 +252,46 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             </div>
           </div>
 
-          {/* Right: Quick Language Switcher, Period Selector & Quick QR */}
+          {/* Right: User Badge, Push Icon, Language & Period Selectors */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick App Language Selector (Text Only, No Flags) */}
+            {/* User status button */}
+            <button
+              type="button"
+              onClick={() => setIsLoginModalOpen(true)}
+              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-bold transition-all ${
+                currentUser?.role === 'admin'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : currentUser
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+              }`}
+              title="Account / Login status"
+            >
+              <span>{currentUser?.role === 'admin' ? '👑 ॲडमिन' : currentUser ? `👤 #${currentUser.account_no}` : 'लॉगिन'}</span>
+            </button>
+
+            {/* Web Push Notification Bell */}
+            <button
+              type="button"
+              onClick={handleTogglePush}
+              title={isPushSubscribed ? 'Web Push सूचना सक्रिय आहेत' : 'Web Push सूचना सुरू करा'}
+              className={`p-1.5 rounded-xl border transition-colors ${
+                isPushSubscribed
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {isPushSubscribed ? <BellRing size={16} /> : <Bell size={16} />}
+            </button>
+
+            {/* Quick App Language Selector */}
             <div className="relative">
               <select
                 value={appLanguage}
                 onChange={(e) => setAppLanguage(e.target.value as any)}
-                className="appearance-none bg-emerald-50 border border-emerald-300 text-forest-900 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-forest-800 shadow-2xs cursor-pointer hover:bg-emerald-100 transition-colors"
+                className="appearance-none bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-800 cursor-pointer hover:bg-emerald-100 transition-colors"
                 aria-label="Application Language"
-                title="Application Language / زبان منتخب کریں / भाषा बदलें"
+                title="Application Language"
               >
                 {APP_LANGUAGES.map((lang) => (
                   <option key={lang.key} value={lang.key}>
@@ -202,11 +301,11 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               </select>
               <Globe2
                 size={12}
-                className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-forest-800"
+                className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-800"
               />
             </div>
 
-            {/* Period selector - All months according to year */}
+            {/* Period selector */}
             <div className="relative">
               <select
                 value={`${selectedPeriod.year}-${selectedPeriod.month}`}
@@ -218,7 +317,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                     monthName: getLocalizedMonthName(m, appLanguage),
                   });
                 }}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-800 cursor-pointer"
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-xl px-2 sm:px-2.5 py-1.5 pr-5 sm:pr-6 text-[11px] sm:text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-800 cursor-pointer"
                 title="Select Month & Year"
               >
                 {Array.from(
@@ -255,13 +354,13 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 max-w-5xl w-full mx-auto">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 max-w-5xl w-full mx-auto pb-24 md:pb-8">{children}</main>
       </div>
 
       {/* =========================================================================
           MOBILE BOTTOM TAB BAR (Sticky to bottom on mobile, hidden on desktop)
          ========================================================================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 flex items-center justify-around safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1.5 py-1 flex items-center justify-around safe-area-bottom print:hidden">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.key;
@@ -275,10 +374,10 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 className="flex flex-col items-center justify-center -mt-5"
                 aria-label="Create transaction"
               >
-                <div className="w-12 h-12 rounded-full bg-forest-800 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-forest-900 transition-transform active:scale-95">
-                  <PlusCircle size={26} />
+                <div className="w-11 h-11 rounded-full bg-emerald-800 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-emerald-900 transition-transform active:scale-95">
+                  <PlusCircle size={24} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-700 mt-0.5">{t('header.quickAction')}</span>
+                <span className="text-[9px] font-bold text-slate-700 mt-0.5">{t('header.quickAction')}</span>
               </button>
             );
           }
@@ -287,12 +386,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <button
               key={item.key}
               type="button"
-              onClick={() => navigateToTab(item.key as any)}
-              className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition-colors ${
-                isActive ? 'text-forest-800 font-bold' : 'text-slate-400 hover:text-slate-600'
+              onClick={() => navigateToTab(item.key as NavigationTab)}
+              className={`flex flex-col items-center py-1 px-2 rounded-xl transition-colors ${
+                isActive ? 'text-emerald-800 font-bold' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-[10px] mt-0.5">{item.label}</span>
             </button>
           );
