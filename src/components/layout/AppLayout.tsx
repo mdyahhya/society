@@ -18,7 +18,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { useSociety, NavigationTab } from '../../context/SocietyContext';
-import { APP_LANGUAGES, getLocalizedMonthName } from '../../i18n/translations';
+import { APP_LANGUAGES, getLocalizedMonthName, getLocalizedSocietyName, getLocalizedEntityName } from '../../i18n/translations';
 import { AppDrawerMenu } from './AppDrawerMenu';
 import { ProfileModal } from '../common/ProfileModal';
 
@@ -53,7 +53,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   }> = [
     { key: 'home', label: t('nav.home'), icon: Home },
     { key: 'members', label: t('nav.members'), icon: Users },
-    { key: 'register', label: t('nav.register', 'नोंदवही'), icon: BookOpen },
+    { key: 'register', label: t('nav.register', 'Register'), icon: BookOpen },
     { key: 'create', label: t('header.quickAction'), icon: PlusCircle, isAction: true },
     { key: 'loans', label: t('nav.loans'), icon: HandCoins },
     { key: 'manage', label: t('nav.manage'), icon: Settings },
@@ -73,6 +73,8 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     }
   };
 
+  const localizedSocietyName = getLocalizedSocietyName(society, appLanguage);
+
   return (
     <div
       className="min-h-screen bg-white text-slate-900 flex flex-col md:flex-row antialiased"
@@ -89,14 +91,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             className="flex items-center gap-3 px-2 py-1 cursor-pointer hover:opacity-90 transition-opacity"
           >
             <div className="w-10 h-10 rounded-2xl bg-emerald-800 text-white flex items-center justify-center shadow-sm font-bold text-base">
-              अ
+              {appLanguage === 'mr' ? 'अ' : 'A'}
             </div>
             <div className="overflow-hidden">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
                 {t('header.tagline')}
               </span>
-              <h1 className="text-sm font-bold text-slate-900 truncate" title={society.name}>
-                {society.name}
+              <h1 className="text-sm font-bold text-slate-900 truncate" title={localizedSocietyName}>
+                {localizedSocietyName}
               </h1>
             </div>
           </div>
@@ -118,19 +120,19 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               </div>
               <div className="overflow-hidden">
                 <p className="font-bold text-slate-900 truncate text-xs group-hover:text-emerald-800 transition-colors">
-                  {currentUser ? (currentUser.name_mr || currentUser.full_name) : 'लॉगिन करा'}
+                  {currentUser ? getLocalizedEntityName(currentUser, appLanguage) : (appLanguage === 'mr' ? 'लॉगिन करा' : 'Log In')}
                 </p>
                 <p className="text-[10px] text-slate-500 capitalize">
                   {currentUser?.role === 'admin'
-                    ? 'सेक्रेटरी / ॲडमिन'
+                    ? t('menu.secretaryAdmin', 'Secretary / Admin')
                     : currentUser
-                    ? `सभासद #${currentUser.account_no}`
-                    : 'अतिथी मोड'}
+                    ? `${t('menu.memberAcc', 'Member')} #${currentUser.account_no}`
+                    : t('menu.guestMode', 'Guest Mode')}
                 </p>
               </div>
             </div>
             <span className="text-[10px] font-bold text-emerald-800 group-hover:underline">
-              प्रोफाइल →
+              {appLanguage === 'mr' ? 'प्रोफाइल →' : 'Profile →'}
             </span>
           </div>
 
@@ -245,7 +247,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               onClick={() => setIsDrawerOpen(true)}
               className="p-1.5 -ml-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center justify-center shrink-0 border border-slate-200 shadow-2xs"
               aria-label="Open Full Navigation Menu"
-              title="मेनू उघडा (Open Menu)"
+              title={appLanguage === 'mr' ? 'मेनू उघडा' : 'Open Navigation Menu'}
             >
               <Menu size={19} />
             </button>
@@ -257,7 +259,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 onClick={() => navigateToTab('home')}
                 className="p-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors hidden sm:flex items-center gap-1 shrink-0"
                 aria-label="Back to Home"
-                title="Back to Home"
+                title={t('header.backToHome', 'Back to Home')}
               >
                 <ArrowLeft size={16} />
               </button>
@@ -265,7 +267,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
             <div className="min-w-0">
               <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none truncate">
-                {society.name}
+                {localizedSocietyName}
               </span>
               <span className="text-sm font-extrabold text-slate-900 capitalize truncate block">
                 {activeTab === 'home'
@@ -273,7 +275,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   : activeTab === 'members'
                   ? t('nav.members')
                   : activeTab === 'register'
-                  ? t('nav.register', 'मासिक नोंदवही')
+                  ? t('nav.register', 'Register')
                   : activeTab === 'loans'
                   ? t('nav.loans')
                   : t('nav.manage')}
@@ -294,11 +296,11 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                   : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
               }`}
-              title="माझे प्रोफाइल व भरणा इतिहास पहा"
+              title={appLanguage === 'mr' ? 'माझे प्रोफाइल व भरणा इतिहास पहा' : 'View Profile & Payment History'}
             >
               <span>{currentUser?.role === 'admin' ? '👑' : <User size={13} className="inline mr-0.5" />}</span>
               <span className="truncate max-w-[100px] sm:max-w-[140px]">
-                {currentUser ? (currentUser.name_mr || currentUser.full_name) : 'लॉगिन'}
+                {currentUser ? getLocalizedEntityName(currentUser, appLanguage) : (appLanguage === 'mr' ? 'लॉगिन' : 'Login')}
               </span>
             </button>
 
@@ -306,7 +308,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <button
               type="button"
               onClick={handleTogglePush}
-              title={isPushSubscribed ? 'Web Push सूचना सक्रिय आहेत' : 'Web Push सूचना सुरू करा'}
+              title={isPushSubscribed ? (appLanguage === 'mr' ? 'Web Push सूचना सक्रिय आहेत' : 'Web Push notifications active') : (appLanguage === 'mr' ? 'Web Push सूचना सुरू करा' : 'Enable Web Push notifications')}
               className={`p-1.5 rounded-xl border transition-colors ${
                 isPushSubscribed
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-700'

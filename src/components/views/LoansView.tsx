@@ -25,6 +25,7 @@ export const LoansView: React.FC = () => {
     society,
     selectedPeriod,
     t,
+    appLanguage,
   } = useSociety();
 
   const [activeTab, setActiveTab] = useState<'active' | 'defaulters' | 'closed'>('active');
@@ -121,7 +122,11 @@ export const LoansView: React.FC = () => {
                           {loan.loan_no}
                         </span>
                         <h3 className="text-sm font-bold text-slate-900">
-                          {borrower ? borrower.name : 'Unknown Member'}
+                          {borrower
+                            ? appLanguage === 'mr'
+                              ? borrower.name_mr || borrower.name
+                              : borrower.name_en || borrower.name
+                            : 'Unknown Member'}
                         </h3>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
@@ -169,7 +174,10 @@ export const LoansView: React.FC = () => {
                           onClick={() => {
                             openWhatsAppModal({
                               memberId: borrower.id,
-                              memberName: borrower.name,
+                              memberName:
+                                appLanguage === 'mr'
+                                  ? borrower.name_mr || borrower.name
+                                  : borrower.name_en || borrower.name,
                               memberPhone: borrower.phone,
                               societyName: society.name,
                               monthName: selectedPeriod.monthName,
@@ -234,7 +242,11 @@ export const LoansView: React.FC = () => {
                     <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                       {item.member.member_no}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-900">{item.member.name}</h3>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {appLanguage === 'mr'
+                        ? item.member.name_mr || item.member.name
+                        : item.member.name_en || item.member.name}
+                    </h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                       {item.type === 'both'
                         ? t('home.dueBoth', 'Share + Loan Due')
@@ -269,7 +281,10 @@ export const LoansView: React.FC = () => {
                     onClick={() => {
                       openWhatsAppModal({
                         memberId: item.member.id,
-                        memberName: item.member.name,
+                        memberName:
+                          appLanguage === 'mr'
+                            ? item.member.name_mr || item.member.name
+                            : item.member.name_en || item.member.name,
                         memberPhone: item.member.phone,
                         societyName: society.name,
                         monthName: selectedPeriod.monthName,
@@ -317,7 +332,11 @@ export const LoansView: React.FC = () => {
                     </div>
                     <div>
                       <span className="font-bold text-slate-900 block">
-                        {borrower ? borrower.name : loan.loan_no}
+                        {borrower
+                          ? appLanguage === 'mr'
+                            ? borrower.name_mr || borrower.name
+                            : borrower.name_en || borrower.name
+                          : loan.loan_no}
                       </span>
                       <span className="text-[11px] text-slate-500">
                         {loan.loan_no} • Disbursed {formatDate(loan.disbursed_date)}

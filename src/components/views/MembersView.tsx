@@ -86,7 +86,11 @@ export const MembersView: React.FC = () => {
   };
 
   const handleDeleteMember = async (id: string, name: string) => {
-    if (window.confirm(`तुम्हाला खात्री आहे का की सभासद "${name}" यांना काढून टाकायचे आहे?`)) {
+    const confirmMsg =
+      appLanguage === 'mr'
+        ? `तुम्हाला खात्री आहे का की सभासद "${name}" यांना काढून टाकायचे आहे?`
+        : `Are you sure you want to remove member "${name}"?`;
+    if (window.confirm(confirmMsg)) {
       await deleteMember(id);
       if (selectedMemberForDetail?.id === id) {
         setSelectedMemberForDetail(null);
@@ -100,10 +104,12 @@ export const MembersView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            सभासद सूची (Members Directory)
+            {appLanguage === 'mr' ? 'सभासद सूची (Members Directory)' : 'Members Directory'}
           </h2>
           <p className="text-xs text-slate-500">
-            एकूण {members.length} सभासद • अकौंट नं. 1 ते 40 • मासिक वर्गणी ₹300/-
+            {appLanguage === 'mr'
+              ? `एकूण ${members.length} सभासद • अकौंट नं. 1 ते 40 • मासिक वर्गणी ₹300/-`
+              : `Total ${members.length} Members • Accounts #1 to 40 • Monthly Share ₹300`}
           </p>
         </div>
 
@@ -114,7 +120,7 @@ export const MembersView: React.FC = () => {
             className="py-2 px-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
           >
             <UserPlus size={15} />
-            <span>नवीन सभासद जोडा</span>
+            <span>{appLanguage === 'mr' ? 'नवीन सभासद जोडा' : 'Add New Member'}</span>
           </button>
         )}
       </div>
@@ -127,7 +133,11 @@ export const MembersView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="नाव, अकौंट नं. (1-40), किंवा मोबाईल नंबर शोधा..."
+            placeholder={
+              appLanguage === 'mr'
+                ? 'नाव, अकौंट नं. (1-40), किंवा मोबाईल नंबर शोधा...'
+                : 'Search by name, account # (1-40), or mobile...'
+            }
             className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-800"
           />
         </div>
@@ -140,7 +150,7 @@ export const MembersView: React.FC = () => {
               filter === 'all' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'
             }`}
           >
-            सर्व ({members.length})
+            {appLanguage === 'mr' ? `सर्व (${members.length})` : `All (${members.length})`}
           </button>
           <button
             type="button"
@@ -149,7 +159,7 @@ export const MembersView: React.FC = () => {
               filter === 'paid' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'
             }`}
           >
-            वर्गणी भरलेले
+            {appLanguage === 'mr' ? 'वर्गणी भरलेले' : 'Paid'}
           </button>
           <button
             type="button"
@@ -158,7 +168,7 @@ export const MembersView: React.FC = () => {
               filter === 'unpaid' ? 'bg-white text-amber-800 shadow-sm' : 'text-slate-600'
             }`}
           >
-            बाकीदार
+            {appLanguage === 'mr' ? 'बाकीदार' : 'Due / Unpaid'}
           </button>
           <button
             type="button"
@@ -167,7 +177,7 @@ export const MembersView: React.FC = () => {
               filter === 'loan' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
             }`}
           >
-            कर्जदार
+            {appLanguage === 'mr' ? 'कर्जदार' : 'On Loan'}
           </button>
         </div>
       </div>
@@ -177,8 +187,14 @@ export const MembersView: React.FC = () => {
         {filteredMembers.length === 0 ? (
           <div className="p-8 text-center bg-white border border-slate-200 rounded-2xl">
             <Users size={32} className="mx-auto text-slate-300 mb-2" />
-            <p className="text-sm font-semibold text-slate-700">कोणतेही सभासद सापडले नाहीत</p>
-            <p className="text-xs text-slate-500 mt-1">कृपया शोध शब्द किंवा फिल्टर बदलून पहा.</p>
+            <p className="text-sm font-semibold text-slate-700">
+              {appLanguage === 'mr' ? 'कोणतेही सभासद सापडले नाहीत' : 'No members found'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {appLanguage === 'mr'
+                ? 'कृपया शोध शब्द किंवा फिल्टर बदलून पहा.'
+                : 'Please try a different search query or filter.'}
+            </p>
           </div>
         ) : (
           filteredMembers.map((member) => {
@@ -200,22 +216,22 @@ export const MembersView: React.FC = () => {
                       #{member.account_no}
                     </span>
                     <h3 className="text-sm font-bold text-slate-900 hover:text-emerald-800 transition-colors">
-                      {member.name_mr || member.name}
+                      {appLanguage === 'mr' ? (member.name_mr || member.name) : (member.name_en || member.name)}
                     </h3>
-                    {member.name_en && (
-                      <span className="text-xs text-slate-400 font-normal">
-                        ({member.name_en})
-                      </span>
-                    )}
+                    <span className="text-xs text-slate-400 font-normal">
+                      ({appLanguage === 'mr' ? (member.name_en || member.name) : (member.name_mr || member.name)})
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
                     <span className="font-mono">{formatPhone(member.phone)}</span>
                     <span>
-                      मासिक वर्गणी: <strong className="text-slate-800 font-semibold">{formatINR(member.monthly_share)}</strong>
+                      {appLanguage === 'mr' ? 'मासिक वर्गणी: ' : 'Monthly Share: '}
+                      <strong className="text-slate-800 font-semibold">{formatINR(member.monthly_share)}</strong>
                     </span>
                     <span>
-                      जमा शेअर्स: <strong className="text-emerald-800 font-bold">{formatINR(member.cumulative_shares || 0)}</strong>
+                      {appLanguage === 'mr' ? 'जमा शेअर्स: ' : 'Total Shares: '}
+                      <strong className="text-emerald-800 font-bold">{formatINR(member.cumulative_shares || 0)}</strong>
                     </span>
                   </div>
 
@@ -224,19 +240,30 @@ export const MembersView: React.FC = () => {
                     {isPaid ? (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                         <CheckCircle2 size={11} />
-                        <span>वर्गणी जमा ({getLocalizedMonthName(selectedPeriod.month, appLanguage)})</span>
+                        <span>
+                          {appLanguage === 'mr'
+                            ? `वर्गणी जमा (${getLocalizedMonthName(selectedPeriod.month, appLanguage)})`
+                            : `Paid (${getLocalizedMonthName(selectedPeriod.month, appLanguage)})`}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
                         <Clock size={11} />
-                        <span>वर्गणी बाकी ({getLocalizedMonthName(selectedPeriod.month, appLanguage)})</span>
+                        <span>
+                          {appLanguage === 'mr'
+                            ? `वर्गणी बाकी (${getLocalizedMonthName(selectedPeriod.month, appLanguage)})`
+                            : `Due (${getLocalizedMonthName(selectedPeriod.month, appLanguage)})`}
+                        </span>
                       </span>
                     )}
 
                     {activeLoan && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 flex items-center gap-1">
                         <HandCoins size={11} />
-                        <span>कर्ज बाकी: {formatINR(activeLoan.remaining_balance)}</span>
+                        <span>
+                          {appLanguage === 'mr' ? 'कर्ज बाकी: ' : 'Loan Balance: '}
+                          {formatINR(activeLoan.remaining_balance)}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -266,7 +293,7 @@ export const MembersView: React.FC = () => {
                       });
                     }}
                     className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
-                    title="WhatsApp आठवण मेसेज पाठवा"
+                    title={appLanguage === 'mr' ? 'WhatsApp आठवण मेसेज पाठवा' : 'Send WhatsApp Reminder'}
                   >
                     <MessageSquare size={15} />
                   </button>
@@ -279,7 +306,7 @@ export const MembersView: React.FC = () => {
                       className="px-2.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold flex items-center gap-1 transition-colors"
                     >
                       <CreditCard size={13} />
-                      <span>नोंदवा</span>
+                      <span>{appLanguage === 'mr' ? 'नोंदवा' : 'Pay'}</span>
                     </button>
                   )}
 
@@ -290,7 +317,7 @@ export const MembersView: React.FC = () => {
                         type="button"
                         onClick={() => handleOpenEdit(member)}
                         className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
-                        title="सभासद माहिती बदला (Edit)"
+                        title={appLanguage === 'mr' ? 'सभासद माहिती बदला (Edit)' : 'Edit Member'}
                       >
                         <Edit2 size={14} />
                       </button>
@@ -299,7 +326,7 @@ export const MembersView: React.FC = () => {
                         type="button"
                         onClick={() => openPasswordModal({ type: 'member', member })}
                         className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-amber-700 border border-slate-200 transition-colors"
-                        title="पासवर्ड / पिन बदला (Change PIN)"
+                        title={appLanguage === 'mr' ? 'पासवर्ड / पिन बदला (Change PIN)' : 'Change PIN'}
                       >
                         <KeyRound size={14} />
                       </button>
@@ -308,7 +335,7 @@ export const MembersView: React.FC = () => {
                         type="button"
                         onClick={() => handleDeleteMember(member.id, member.name)}
                         className="p-2 rounded-xl bg-slate-50 hover:bg-red-50 text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
-                        title="सभासद काढा (Delete)"
+                        title={appLanguage === 'mr' ? 'सभासद काढा (Delete)' : 'Delete Member'}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -342,8 +369,16 @@ export const MembersView: React.FC = () => {
         <Modal
           isOpen={Boolean(selectedMemberForDetail)}
           onClose={() => setSelectedMemberForDetail(null)}
-          title={`#${selectedMemberForDetail.account_no} ${selectedMemberForDetail.name_mr || selectedMemberForDetail.name}`}
-          subtitle={`अकौंट नं. ${selectedMemberForDetail.account_no} • सामील: ${formatDate(selectedMemberForDetail.join_date)}`}
+          title={`#${selectedMemberForDetail.account_no} ${
+            appLanguage === 'mr'
+              ? selectedMemberForDetail.name_mr || selectedMemberForDetail.name
+              : selectedMemberForDetail.name_en || selectedMemberForDetail.name
+          }`}
+          subtitle={`${appLanguage === 'mr' ? 'अकौंट नं.' : 'Account #'} ${
+            selectedMemberForDetail.account_no
+          } • ${appLanguage === 'mr' ? 'सामील' : 'Joined'}: ${formatDate(
+            selectedMemberForDetail.join_date
+          )}`}
           maxWidth="lg"
         >
           {(() => {
@@ -358,7 +393,7 @@ export const MembersView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[11px] font-semibold text-slate-500 block">
-                      एकूण जमा शेअर्स
+                      {appLanguage === 'mr' ? 'एकूण जमा शेअर्स' : 'Total Accumulated Shares'}
                     </span>
                     <span className="text-base font-bold text-emerald-800">
                       {formatINR((selectedMemberForDetail.cumulative_shares || 0) + totalContributed)}
@@ -366,10 +401,14 @@ export const MembersView: React.FC = () => {
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[11px] font-semibold text-slate-500 block">
-                      चालू कर्ज बाकी
+                      {appLanguage === 'mr' ? 'चालू कर्ज बाकी' : 'Active Loan Balance'}
                     </span>
                     <span className="text-base font-bold text-slate-900">
-                      {activeLoan ? formatINR(activeLoan.remaining_balance) : 'Nil (कोणतेही कर्ज नाही)'}
+                      {activeLoan
+                        ? formatINR(activeLoan.remaining_balance)
+                        : appLanguage === 'mr'
+                        ? 'Nil (कोणतेही कर्ज नाही)'
+                        : 'Nil (No Loan)'}
                     </span>
                   </div>
                 </div>
@@ -377,9 +416,11 @@ export const MembersView: React.FC = () => {
                 {/* Login Credentials Box (Visible to Admin or that Member) */}
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-slate-500 font-medium">लॉगिन क्रेडेंशियल्स:</span>
+                    <span className="text-slate-500 font-medium">
+                      {appLanguage === 'mr' ? 'लॉगिन क्रेडेंशियल्स:' : 'Login Credentials:'}
+                    </span>
                     <p className="font-bold text-slate-900 mt-0.5">
-                      युझर / फोन: {selectedMemberForDetail.phone} • पिन: {selectedMemberForDetail.password || '1234'}
+                      {appLanguage === 'mr' ? 'युझर / फोन' : 'User / Phone'}: {selectedMemberForDetail.phone} • {appLanguage === 'mr' ? 'पिन' : 'PIN'}: {selectedMemberForDetail.password || '1234'}
                     </p>
                   </div>
                   {isAdmin && (
@@ -390,7 +431,7 @@ export const MembersView: React.FC = () => {
                       }
                       className="px-2.5 py-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-semibold"
                     >
-                      पिन बदला
+                      {appLanguage === 'mr' ? 'पिन बदला' : 'Change PIN'}
                     </button>
                   )}
                 </div>
@@ -399,14 +440,22 @@ export const MembersView: React.FC = () => {
                 {activeLoan && (
                   <div className="p-3 bg-amber-50/50 border border-amber-200 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-900">सक्रिय कर्ज तपशील</span>
+                      <span className="text-xs font-bold text-amber-900">
+                        {appLanguage === 'mr' ? 'सक्रिय कर्ज तपशील' : 'Active Loan Details'}
+                      </span>
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
-                        हप्ता: {formatINR(activeLoan.monthly_installment)}/महिना
+                        {appLanguage === 'mr' ? 'हप्ता' : 'Installment'}: {formatINR(activeLoan.monthly_installment)} / {appLanguage === 'mr' ? 'महिना' : 'mo'}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-700">
-                      <span>मंजूर रक्कम: <strong>{formatINR(activeLoan.principal_amount)}</strong></span>
-                      <span>उर्वरित बाकी: <strong className="text-amber-800">{formatINR(activeLoan.remaining_balance)}</strong></span>
+                      <span>
+                        {appLanguage === 'mr' ? 'मंजूर रक्कम: ' : 'Principal: '}
+                        <strong>{formatINR(activeLoan.principal_amount)}</strong>
+                      </span>
+                      <span>
+                        {appLanguage === 'mr' ? 'उर्वरित बाकी: ' : 'Balance: '}
+                        <strong className="text-amber-800">{formatINR(activeLoan.remaining_balance)}</strong>
+                      </span>
                     </div>
                   </div>
                 )}
@@ -422,7 +471,7 @@ export const MembersView: React.FC = () => {
                     className="flex-1 py-2 px-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     <CreditCard size={14} />
-                    <span>वर्गणी नोंदवा</span>
+                    <span>{appLanguage === 'mr' ? 'वर्गणी नोंदवा' : 'Record Share'}</span>
                   </button>
                   {isAdmin && (
                     <button
@@ -434,7 +483,7 @@ export const MembersView: React.FC = () => {
                       }}
                       className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
                     >
-                      माहिती संपादन
+                      {appLanguage === 'mr' ? 'माहिती संपादन' : 'Edit Member'}
                     </button>
                   )}
                 </div>

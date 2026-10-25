@@ -68,37 +68,61 @@ export const HomeView: React.FC = () => {
 
     contributions.slice(0, 4).forEach((c) => {
       const m = members.find((mem) => mem.id === c.member_id);
+      const name = m
+        ? appLanguage === 'mr'
+          ? m.name_mr || m.name
+          : m.name_en || m.name
+        : appLanguage === 'mr'
+        ? 'सभासद'
+        : 'Member';
       list.push({
         id: c.id,
         type: 'contribution',
-        memberName: m ? m.name : 'सभासद',
+        memberName: name,
         amount: c.amount,
         date: c.payment_date,
-        detail: `मासिक वर्गणी (${getLocalizedMonthName(c.period_month, appLanguage)})`,
+        detail:
+          appLanguage === 'mr'
+            ? `मासिक वर्गणी (${getLocalizedMonthName(c.period_month, appLanguage)})`
+            : `Monthly Share (${getLocalizedMonthName(c.period_month, appLanguage)})`,
       });
     });
 
     repayments.slice(0, 3).forEach((r) => {
       const m = members.find((mem) => mem.id === r.member_id);
+      const name = m
+        ? appLanguage === 'mr'
+          ? m.name_mr || m.name
+          : m.name_en || m.name
+        : appLanguage === 'mr'
+        ? 'कर्जदार'
+        : 'Borrower';
       list.push({
         id: r.id,
         type: 'repayment',
-        memberName: m ? m.name : 'कर्जदार',
+        memberName: name,
         amount: r.amount,
         date: r.repayment_date,
-        detail: 'कर्ज हप्ता भरणा',
+        detail: appLanguage === 'mr' ? 'कर्ज हप्ता भरणा' : 'Loan Repayment',
       });
     });
 
     loans.slice(0, 2).forEach((l) => {
       const m = members.find((mem) => mem.id === l.member_id);
+      const name = m
+        ? appLanguage === 'mr'
+          ? m.name_mr || m.name
+          : m.name_en || m.name
+        : appLanguage === 'mr'
+        ? 'कर्जदार'
+        : 'Borrower';
       list.push({
         id: l.id,
         type: 'disbursement',
-        memberName: m ? m.name : 'कर्जदार',
+        memberName: name,
         amount: l.principal_amount,
         date: l.disbursed_date,
-        detail: 'नवीन कर्ज वाटप',
+        detail: appLanguage === 'mr' ? 'नवीन कर्ज वाटप' : 'New Loan Disbursed',
       });
     });
 
@@ -124,13 +148,17 @@ export const HomeView: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-700/60">
             <div>
               <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-300">
-                सभासद पासबुक (Member Passbook)
+                {appLanguage === 'mr' ? 'सभासद पासबुक (Member Passbook)' : 'Member Passbook'}
               </span>
               <h2 className="text-lg font-bold">
-                स्वागत आहे, {currentMemberRecord.name_mr || currentMemberRecord.name}!
+                {appLanguage === 'mr'
+                  ? `स्वागत आहे, ${currentMemberRecord.name_mr || currentMemberRecord.name}!`
+                  : `Welcome, ${currentMemberRecord.name_en || currentMemberRecord.name}!`}
               </h2>
               <p className="text-xs text-emerald-200">
-                अकौंट नं. #{currentMemberRecord.account_no} • मासिक वर्गणी ₹{currentMemberRecord.monthly_share}/-
+                {appLanguage === 'mr'
+                  ? `अकौंट नं. #${currentMemberRecord.account_no} • मासिक वर्गणी ₹${currentMemberRecord.monthly_share}/-`
+                  : `Account #${currentMemberRecord.account_no} • Monthly Share ₹${currentMemberRecord.monthly_share}`}
               </p>
             </div>
 
@@ -140,22 +168,34 @@ export const HomeView: React.FC = () => {
               className="py-2 px-3.5 bg-white text-emerald-900 rounded-xl text-xs font-bold self-start sm:self-auto hover:bg-emerald-50 transition-colors shadow-sm flex items-center gap-1.5"
             >
               <QrCode size={15} />
-              <span>UPI द्वारे ₹{currentMemberRecord.monthly_share} भरा</span>
+              <span>
+                {appLanguage === 'mr'
+                  ? `UPI द्वारे ₹${currentMemberRecord.monthly_share} भरा`
+                  : `Pay ₹${currentMemberRecord.monthly_share} via UPI`}
+              </span>
             </button>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-3 text-xs">
             <div className="p-2.5 bg-emerald-900/50 rounded-xl border border-emerald-700/40">
-              <span className="text-[11px] text-emerald-300 block">एकूण जमा शेअर्स</span>
+              <span className="text-[11px] text-emerald-300 block">
+                {appLanguage === 'mr' ? 'एकूण जमा शेअर्स' : 'Total Accumulated Shares'}
+              </span>
               <span className="text-base font-bold text-white">
                 {formatINR(currentMemberRecord.cumulative_shares || 0)}
               </span>
             </div>
 
             <div className="p-2.5 bg-emerald-900/50 rounded-xl border border-emerald-700/40">
-              <span className="text-[11px] text-emerald-300 block">चालू कर्ज बाकी</span>
+              <span className="text-[11px] text-emerald-300 block">
+                {appLanguage === 'mr' ? 'चालू कर्ज बाकी' : 'Active Loan Balance'}
+              </span>
               <span className="text-base font-bold text-amber-300">
-                {currentMemberLoan ? formatINR(currentMemberLoan.remaining_balance) : 'Nil (कोणतेही कर्ज नाही)'}
+                {currentMemberLoan
+                  ? formatINR(currentMemberLoan.remaining_balance)
+                  : appLanguage === 'mr'
+                  ? 'Nil (कोणतेही कर्ज नाही)'
+                  : 'Nil (No Loan)'}
               </span>
             </div>
           </div>
@@ -171,7 +211,7 @@ export const HomeView: React.FC = () => {
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-                {t('home.availablePool')} (Available Cash Balance)
+                {t('home.availablePool')}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {formatINR(poolMetrics.availablePoolBalance)}
@@ -195,7 +235,7 @@ export const HomeView: React.FC = () => {
               className="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <PlusCircle size={15} />
-              <span>वर्गणी नोंदवा</span>
+              <span>{appLanguage === 'mr' ? 'वर्गणी नोंदवा' : 'Record Share'}</span>
             </button>
           </div>
         </div>
@@ -232,10 +272,12 @@ export const HomeView: React.FC = () => {
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-900">
-              मासिक नोंदवही रजिस्टर (Digital Ledger)
+              {appLanguage === 'mr' ? 'मासिक नोंदवही रजिस्टर (Digital Ledger)' : 'Monthly Digital Register'}
             </h4>
             <p className="text-xs text-slate-600">
-              सर्व 40 सभासदांचे शेअर्स, कर्जाचे हप्ते व रोख ताळेबंद पत्रक पहा किंवा A4 शीट प्रिंट करा.
+              {appLanguage === 'mr'
+                ? 'सर्व 40 सभासदांचे शेअर्स, कर्जाचे हप्ते व रोख ताळेबंद पत्रक पहा किंवा A4 शीट प्रिंट करा.'
+                : 'View monthly share collections, loan installments, and cash reconciliation sheet for all 40 members.'}
             </p>
           </div>
         </div>
@@ -289,7 +331,7 @@ export const HomeView: React.FC = () => {
             <div className="flex items-center gap-2 text-amber-800">
               <ShieldAlert size={18} />
               <h3 className="text-sm font-bold text-slate-900">
-                {t('home.pendingDues')} ({defaulters.length} सभासद)
+                {t('home.pendingDues')} ({defaulters.length} {appLanguage === 'mr' ? 'सभासद' : 'Members'})
               </h3>
             </div>
 
@@ -302,7 +344,19 @@ export const HomeView: React.FC = () => {
                 title="Send automated push notification"
               >
                 <Bell size={12} />
-                <span>{sendingDueAlert ? 'पाठवत आहे...' : alertSuccess ? 'सूचना पाठवली! ✅' : '📢 थकीत आठवण सूचना पाठवा'}</span>
+                <span>
+                  {sendingDueAlert
+                    ? appLanguage === 'mr'
+                      ? 'पाठवत आहे...'
+                      : 'Sending...'
+                    : alertSuccess
+                    ? appLanguage === 'mr'
+                      ? 'सूचना पाठवली! ✅'
+                      : 'Sent! ✅'
+                    : appLanguage === 'mr'
+                    ? '📢 थकीत आठवण सूचना पाठवा'
+                    : '📢 Send Due Reminders'}
+                </span>
               </button>
 
               <button
@@ -327,7 +381,11 @@ export const HomeView: React.FC = () => {
                     <span className="text-xs font-bold font-mono bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded">
                       #{item.member.account_no}
                     </span>
-                    <span className="text-sm font-bold text-slate-900">{item.member.name_mr || item.member.name}</span>
+                    <span className="text-sm font-bold text-slate-900">
+                      {appLanguage === 'mr'
+                        ? item.member.name_mr || item.member.name
+                        : item.member.name_en || item.member.name}
+                    </span>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                       {item.type === 'both'
                         ? t('home.dueBoth', 'Share + Loan Due')
@@ -347,7 +405,10 @@ export const HomeView: React.FC = () => {
                   onClick={() =>
                     openWhatsAppModal({
                       memberId: item.member.id,
-                      memberName: item.member.name_mr || item.member.name,
+                      memberName:
+                        appLanguage === 'mr'
+                          ? item.member.name_mr || item.member.name
+                          : item.member.name_en || item.member.name,
                       memberPhone: item.member.phone,
                       societyName: society.name,
                       monthName: monthMetrics.monthName,

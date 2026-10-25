@@ -2,13 +2,15 @@ import { Society, Member, Contribution, Loan, LoanRepayment, MonthlyLedger } fro
 
 export const SEED_SOCIETY: Society = {
   id: 'soc-albadr-01',
-  name: 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.',
+  name: 'Al-Badr Bilasudi Co-Op Society, Solapur',
+  name_en: 'Al-Badr Bilasudi Co-Op Society, Solapur',
+  name_mr: 'अल-बदर बिलासौदी को.ऑप. सोसायटी, सोलापूर.',
   upi_id: 'albadr.society@okaxis',
   currency: 'INR',
   opening_balance: 26820,
   contact_phone: '9800000000',
-  address: 'बिलासौदी, सोलापूर, महाराष्ट्र (Bilasudi, Solapur, Maharashtra)',
-  default_reminder_lang: 'mr',
+  address: 'Bilasudi, Solapur, Maharashtra',
+  default_reminder_lang: 'en',
   created_at: '2024-01-01T00:00:00.000Z',
   updated_at: '2024-10-25T00:00:00.000Z',
 };

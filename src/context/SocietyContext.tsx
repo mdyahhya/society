@@ -134,7 +134,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       role: 'admin',
       account_no: 0,
       phone: '9800000000',
-      full_name: 'सेक्रेटरी / ॲडमिन',
+      full_name: 'Secretary / Admin',
       name_mr: 'सेक्रेटरी / ॲडमिन',
       name_en: 'Secretary / Admin',
     };
@@ -143,26 +143,28 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const isAdmin = currentUser?.role === 'admin';
   const isMember = currentUser?.role === 'member';
 
-  // App UI language setting (en, hi, mr, ur)
+  // App UI language setting (en, hi, mr, ur) - DEFAULT IS ENGLISH
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('society_app_language');
+      const stored = localStorage.getItem('society_app_language_pref') || localStorage.getItem('society_app_language_v2');
       if (stored === 'en' || stored === 'ur' || stored === 'hi' || stored === 'mr') {
         return stored as AppLanguage;
       }
     }
-    return 'mr'; // Default to Marathi for Al-Badr Bilasudi Co-Op Society
+    return 'en'; // Default to English as requested
   });
 
   const setAppLanguage = (lang: AppLanguage) => {
     setAppLanguageState(lang);
     if (typeof window !== 'undefined') {
+      localStorage.setItem('society_app_language_pref', lang);
+      localStorage.setItem('society_app_language_v2', lang);
       localStorage.setItem('society_app_language', lang);
     }
   };
 
-  const t = (key: TranslationKey, fallback?: string): string => {
-    return getTranslation(appLanguage, key, fallback);
+  const t = (key: TranslationKey | string, fallback?: string): string => {
+    return getTranslation(appLanguage, key as any, fallback);
   };
 
   // Reminder language setting
@@ -173,7 +175,7 @@ export const SocietyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return stored;
       }
     }
-    return 'mr';
+    return 'en';
   });
 
   const setDefaultReminderLang = (lang: ReminderLanguage) => {

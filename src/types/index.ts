@@ -5,6 +5,8 @@ export type LoanStatus = 'active' | 'closed' | 'defaulted';
 export interface Society {
   id: string;
   name: string;
+  name_mr?: string;
+  name_en?: string;
   upi_id: string; // e.g. society@okaxis or treasurer@upi
   currency: string;
   opening_balance: number;

@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useSociety, NavigationTab } from '../../context/SocietyContext';
-import { APP_LANGUAGES } from '../../i18n/translations';
+import { APP_LANGUAGES, getLocalizedSocietyName, getLocalizedEntityName } from '../../i18n/translations';
 
 interface AppDrawerMenuProps {
   isOpen: boolean;
@@ -74,6 +74,8 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
     onClose();
   };
 
+  const localizedSocietyName = getLocalizedSocietyName(society, appLanguage);
+
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
@@ -89,14 +91,14 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                अ
+                {appLanguage === 'mr' ? 'अ' : 'A'}
               </div>
               <div>
                 <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none">
-                  मेनू (Menu)
+                  {t('menu.title', 'Navigation Menu')}
                 </span>
-                <h3 className="text-xs font-bold text-slate-900 truncate max-w-[170px]" title={society.name}>
-                  {society.name}
+                <h3 className="text-xs font-bold text-slate-900 truncate max-w-[170px]" title={localizedSocietyName}>
+                  {localizedSocietyName}
                 </h3>
               </div>
             </div>
@@ -122,13 +124,19 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               </div>
               <div className="overflow-hidden">
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-700/60 text-emerald-200 uppercase tracking-wider">
-                  {currentUser?.role === 'admin' ? 'सेक्रेटरी / ॲडमिन' : currentUser ? `अकौंट #${currentUser.account_no}` : 'अतिथी मोड'}
+                  {currentUser?.role === 'admin'
+                    ? t('menu.secretaryAdmin', 'Secretary / Admin')
+                    : currentUser
+                    ? `${t('menu.memberAcc', 'Member')} #${currentUser.account_no}`
+                    : t('menu.guestMode', 'Guest Mode')}
                 </span>
                 <h4 className="text-xs font-bold truncate mt-0.5">
-                  {currentUser ? (currentUser.name_mr || currentUser.full_name) : 'लॉगिन करा'}
+                  {currentUser ? getLocalizedEntityName(currentUser, appLanguage) : (appLanguage === 'mr' ? 'लॉगिन करा' : 'Log In')}
                 </h4>
                 <p className="text-[10px] text-emerald-200 truncate">
-                  {currentUser ? 'माझे प्रोफाइल व भरणा इतिहास →' : 'खाते ॲक्सेस करण्यासाठी टॅप करा'}
+                  {currentUser
+                    ? (appLanguage === 'mr' ? 'माझे प्रोफाइल व भरणा इतिहास →' : 'My Profile & Passbook →')
+                    : (appLanguage === 'mr' ? 'खाते ॲक्सेस करण्यासाठी टॅप करा' : 'Tap to sign in to account')}
                 </p>
               </div>
             </div>
@@ -138,7 +146,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
           {/* Main Navigation Links */}
           <div className="space-y-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">
-              विभाग (Sections)
+              {t('menu.sections', 'Sections')}
             </span>
 
             <button
@@ -151,7 +159,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               }`}
             >
               <Home size={17} />
-              <span>{t('nav.home')} (मुख्य पान)</span>
+              <span>{t('nav.home')}</span>
             </button>
 
             <button
@@ -164,7 +172,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               }`}
             >
               <Users size={17} />
-              <span>{t('nav.members')} (सभासद सूची)</span>
+              <span>{t('nav.members')}</span>
             </button>
 
             <button
@@ -177,7 +185,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               }`}
             >
               <BookOpen size={17} />
-              <span>{t('nav.register', 'मासिक नोंदवही')} (Digital Register)</span>
+              <span>{t('nav.register', 'Monthly Register')}</span>
             </button>
 
             <button
@@ -190,7 +198,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               }`}
             >
               <HandCoins size={17} />
-              <span>{t('nav.loans')} (कर्ज व हप्ते)</span>
+              <span>{t('nav.loans')}</span>
             </button>
 
             <button
@@ -203,14 +211,14 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               }`}
             >
               <Settings size={17} />
-              <span>{t('nav.manage')} (सेटिंग्ज व व्यवस्थापन)</span>
+              <span>{t('nav.manage')}</span>
             </button>
           </div>
 
           {/* More Quick Tools */}
           <div className="space-y-1 pt-2 border-t border-slate-100">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">
-              अधिक पर्याय (More Options)
+              {t('menu.moreOptions', 'More Options')}
             </span>
 
             {currentUser && (
@@ -221,7 +229,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-700 hover:bg-slate-100 font-medium transition-colors"
                 >
                   <User size={16} className="text-emerald-800" />
-                  <span>माझे प्रोफाइल व पासबुक</span>
+                  <span>{t('menu.myProfile', 'My Profile & Passbook')}</span>
                 </button>
 
                 <button
@@ -230,7 +238,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-700 hover:bg-slate-100 font-medium transition-colors"
                 >
                   <KeyRound size={16} className="text-amber-700" />
-                  <span>पासवर्ड / पिन बदला</span>
+                  <span>{t('menu.changePassword', 'Change Password / PIN')}</span>
                 </button>
               </>
             )}
@@ -245,12 +253,12 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
             >
               <span className="flex items-center gap-3">
                 <BellRing size={16} className="text-emerald-700" />
-                <span>Web Push सूचना</span>
+                <span>{t('menu.webPush', 'Web Push Alerts')}</span>
               </span>
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 isPushSubscribed ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
               }`}>
-                {isPushSubscribed ? 'सक्रिय' : 'सुरू करा'}
+                {isPushSubscribed ? t('menu.active', 'Active') : t('menu.enable', 'Enable')}
               </span>
             </button>
 
@@ -263,7 +271,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-700 hover:bg-slate-100 font-medium transition-colors"
             >
               <Download size={16} className="text-slate-700" />
-              <span>मोबाईल ॲप इन्स्टॉल करा (PWA)</span>
+              <span>{t('menu.installApp', 'Install Mobile App (PWA)')}</span>
             </button>
 
             <button
@@ -275,7 +283,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-slate-700 hover:bg-slate-100 font-medium transition-colors"
             >
               <QrCode size={16} className="text-slate-700" />
-              <span>सोसायटी UPI QR कोड</span>
+              <span>{t('menu.upiQr', 'Society UPI QR Code')}</span>
             </button>
           </div>
         </div>
@@ -286,12 +294,12 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-600 flex items-center gap-1.5">
               <Globe2 size={14} className="text-emerald-800" />
-              <span>भाषा (Language):</span>
+              <span>{t('menu.language', 'Language')}:</span>
             </span>
             <select
               value={appLanguage}
               onChange={(e) => setAppLanguage(e.target.value as any)}
-              className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none"
+              className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
             >
               {APP_LANGUAGES.map((l) => (
                 <option key={l.key} value={l.key}>
@@ -309,7 +317,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-red-200"
             >
               <LogOut size={14} />
-              <span>लॉगआउट करा</span>
+              <span>{t('menu.logout', 'Log Out')}</span>
             </button>
           ) : (
             <button
@@ -321,7 +329,7 @@ export const AppDrawerMenu: React.FC<AppDrawerMenuProps> = ({
               className="w-full py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
             >
               <LogIn size={14} />
-              <span>लॉगिन करा</span>
+              <span>{t('menu.login', 'Log In')}</span>
             </button>
           )}
         </div>

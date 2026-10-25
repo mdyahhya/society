@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useSociety } from '../../context/SocietyContext';
 import { formatINR, formatDate, formatPhone } from '../../utils/formatters';
+import { getLocalizedEntityName } from '../../i18n/translations';
 import { Modal } from './Modal';
 
 interface ProfileModalProps {
@@ -35,6 +36,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     openPasswordModal,
     logout,
     isAdmin,
+    appLanguage,
+    t,
   } = useSociety();
 
   const [activeSubTab, setActiveSubTab] = useState<'info' | 'history'>('info');
@@ -58,10 +61,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           .map((c) => ({
             id: c.id,
             type: 'contribution' as const,
-            title: `मासिक वर्गणी (Month ${c.period_month}/${c.period_year})`,
+            title: appLanguage === 'mr'
+              ? `मासिक वर्गणी (माहे ${c.period_month}/${c.period_year})`
+              : `Monthly Share (Month ${c.period_month}/${c.period_year})`,
             amount: c.amount,
             date: c.payment_date,
-            time: c.created_at ? new Date(c.created_at).toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit' }) : '10:00 AM',
+            time: c.created_at ? new Date(c.created_at).toLocaleTimeString(appLanguage === 'mr' ? 'mr-IN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '10:00 AM',
             method: c.payment_method,
             note: c.reference_note,
           })),
@@ -70,10 +75,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           .map((r) => ({
             id: r.id,
             type: 'repayment' as const,
-            title: 'कर्ज हप्ता परतावा (Loan Installment)',
+            title: appLanguage === 'mr'
+              ? 'कर्ज हप्ता परतावा (Loan Repayment)'
+              : 'Loan Installment Repayment',
             amount: r.amount,
             date: r.repayment_date,
-            time: r.created_at ? new Date(r.created_at).toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit' }) : '11:30 AM',
+            time: r.created_at ? new Date(r.created_at).toLocaleTimeString(appLanguage === 'mr' ? 'mr-IN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '11:30 AM',
             method: r.payment_method,
             note: r.notes,
           })),
@@ -86,7 +93,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="माझे प्रोफाइल (My Profile)" maxWidth="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('profile.title', 'My Profile & Passbook')} maxWidth="md">
       <div className="space-y-4">
         {/* Profile Card Header */}
         <div className="p-4 bg-gradient-to-r from-emerald-800 to-emerald-950 text-white rounded-2xl shadow-sm flex items-center justify-between">
@@ -97,14 +104,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-700/60 text-emerald-200">
-                  {currentUser.role === 'admin' ? 'सेक्रेटरी / ॲडमिन' : `अकौंट नं. #${currentUser.account_no}`}
+                  {currentUser.role === 'admin'
+                    ? t('menu.secretaryAdmin', 'Secretary / Admin')
+                    : `${t('menu.memberAcc', 'Member')} #${currentUser.account_no}`}
                 </span>
               </div>
               <h3 className="text-base font-bold mt-0.5">
-                {currentUser.name_mr || currentUser.full_name}
+                {getLocalizedEntityName(currentUser, appLanguage)}
               </h3>
-              {currentUser.name_en && (
+              {appLanguage === 'mr' && currentUser.name_en && (
                 <p className="text-xs text-emerald-200">{currentUser.name_en}</p>
+              )}
+              {appLanguage !== 'mr' && currentUser.name_mr && (
+                <p className="text-xs text-emerald-200">{currentUser.name_mr}</p>
               )}
             </div>
           </div>
@@ -112,7 +124,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           <button
             type="button"
             onClick={handleLogout}
-            title="लॉगआउट करा"
+            title={t('menu.logout', 'Log Out')}
             className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
           >
             <LogOut size={16} />
@@ -129,7 +141,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 activeSubTab === 'info' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600'
               }`}
             >
-              खाते तपशील (Account Info)
+              {t('profile.accountInfo', 'Account Info')}
             </button>
             <button
               type="button"
@@ -139,7 +151,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               }`}
             >
               <History size={13} />
-              <span>भरणा इतिहास ({paymentHistory.length})</span>
+              <span>{t('profile.paymentHistory', 'Payment History')} ({paymentHistory.length})</span>
             </button>
           </div>
         )}
@@ -152,7 +164,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <Lock size={14} className="text-emerald-800" />
-                  <span>लॉगिन क्रेडेंशियल्स (Security & Credentials)</span>
+                  <span>{t('profile.credentials', 'Login Credentials & PIN')}</span>
                 </span>
                 <button
                   type="button"
@@ -167,19 +179,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   className="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1"
                 >
                   <KeyRound size={12} />
-                  <span>पिन बदला</span>
+                  <span>{t('profile.changePin', 'Change PIN')}</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-slate-500 font-medium block">मोबाईल नंबर / युझर:</span>
+                  <span className="text-slate-500 font-medium block">
+                    {appLanguage === 'mr' ? 'मोबाईल नंबर / युझर:' : 'Mobile / Username:'}
+                  </span>
                   <span className="font-mono font-bold text-slate-900 mt-0.5 block">
                     {formatPhone(currentUser.phone)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500 font-medium block">सध्याचा पासवर्ड / पिन:</span>
+                  <span className="text-slate-500 font-medium block">
+                    {appLanguage === 'mr' ? 'सध्याचा पासवर्ड / पिन:' : 'Security PIN / Password:'}
+                  </span>
                   <span className="font-mono font-bold text-slate-900 mt-0.5 block">
                     {currentMember?.password || (currentUser.role === 'admin' ? '••••••' : '1234')}
                   </span>
@@ -192,23 +208,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
                   <span className="text-[11px] font-semibold text-emerald-800 block">
-                    एकूण जमा शेअर्स
+                    {t('profile.cumulativeShares', 'Total Accumulated Shares')}
                   </span>
                   <span className="text-lg font-bold text-emerald-950 mt-0.5 block">
                     {formatINR(currentMember.cumulative_shares || 0)}
                   </span>
-                  <span className="text-[10px] text-emerald-700 font-medium">दरमहा ₹300/-</span>
+                  <span className="text-[10px] text-emerald-700 font-medium">
+                    {appLanguage === 'mr' ? 'दरमहा ₹300/-' : '₹300 / month'}
+                  </span>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
                   <span className="text-[11px] font-semibold text-slate-600 block">
-                    चालू कर्ज शिल्लक
+                    {t('profile.remainingLoan', 'Active Loan Balance')}
                   </span>
                   <span className="text-lg font-bold text-slate-900 mt-0.5 block">
                     {activeLoan ? formatINR(activeLoan.remaining_balance) : '₹0'}
                   </span>
                   <span className="text-[10px] text-slate-500 font-medium">
-                    {activeLoan ? `हप्ता: ${formatINR(activeLoan.monthly_installment)}/महिना` : 'कोणतेही कर्ज नाही'}
+                    {activeLoan
+                      ? (appLanguage === 'mr'
+                        ? `हप्ता: ${formatINR(activeLoan.monthly_installment)}/महिना`
+                        : `Installment: ${formatINR(activeLoan.monthly_installment)}/mo`)
+                      : (appLanguage === 'mr' ? 'कोणतेही कर्ज नाही' : 'No active loan')}
                   </span>
                 </div>
               </div>
@@ -219,10 +241,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 space-y-1">
                 <span className="font-bold flex items-center gap-1">
                   <ShieldCheck size={14} className="text-amber-800" />
-                  <span>मुख्य ॲडमिन / सेक्रेटरी अधिकार</span>
+                  <span>
+                    {appLanguage === 'mr' ? 'मुख्य ॲडमिन / सेक्रेटरी अधिकार' : 'Administrator & Secretary Access'}
+                  </span>
                 </span>
                 <p className="text-[11px] text-amber-800 leading-relaxed">
-                  आपल्याकडे सर्व 40 सदस्यांची माहिती, शेअर्स, कर्ज वाटप, मासिक रजिस्टर संपादन आणि पासवर्ड रीसेट करण्याचे पूर्ण अधिकार आहेत.
+                  {appLanguage === 'mr'
+                    ? 'आपल्याकडे सर्व 40 सदस्यांची माहिती, शेअर्स, कर्ज वाटप, मासिक रजिस्टर संपादन आणि पासवर्ड रीसेट करण्याचे पूर्ण अधिकार आहेत.'
+                    : 'Full administrative access to manage all 40 members, contributions, loan cycles, digital register editing, and password resets.'}
                 </p>
               </div>
             )}
@@ -234,7 +260,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {paymentHistory.length === 0 ? (
               <div className="p-6 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                <p className="text-xs text-slate-500 font-medium">अद्याप कोणताही भरणा इतिहास उपलब्ध नाही.</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  {t('profile.noHistory', 'No payment history recorded yet.')}
+                </p>
               </div>
             ) : (
               paymentHistory.map((item) => (
@@ -264,7 +292,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       +{formatINR(item.amount)}
                     </span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded font-bold">
-                      यशस्वी ✅
+                      {t('profile.paid', 'Paid')} ✅
                     </span>
                   </div>
                 </div>
@@ -279,7 +307,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           onClick={onClose}
           className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
         >
-          बंद करा
+          {t('profile.close', 'Close')}
         </button>
       </div>
     </Modal>

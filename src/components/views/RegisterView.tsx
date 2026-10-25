@@ -21,6 +21,7 @@ import { useSociety } from '../../context/SocietyContext';
 import { storageService } from '../../services/storage';
 import { formatINR } from '../../utils/formatters';
 import { LedgerEntry } from '../../types';
+import { getLocalizedSocietyName } from '../../i18n/translations';
 
 export const RegisterView: React.FC = () => {
   const {
@@ -37,6 +38,8 @@ export const RegisterView: React.FC = () => {
     currentUser,
     openPasswordModal,
     members,
+    appLanguage,
+    t,
   } = useSociety();
 
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
@@ -85,7 +88,11 @@ export const RegisterView: React.FC = () => {
     }
 
     setEditingEntry(null);
-    setSaveSuccessToast(`सभासद #${editingEntry.account_no} ची नोंद जतन झाली!`);
+    setSaveSuccessToast(
+      appLanguage === 'mr'
+        ? `सभासद #${editingEntry.account_no} ची नोंद जतन झाली!`
+        : `Member #${editingEntry.account_no} record saved successfully!`
+    );
     setTimeout(() => setSaveSuccessToast(null), 3000);
   };
 
@@ -94,11 +101,17 @@ export const RegisterView: React.FC = () => {
     setIsSaving(true);
     try {
       await storageService.syncLedger(activeLedger);
-      setSaveSuccessToast('रजिस्टर यशस्वीरित्या जतन झाले! सर्व नोंदी सुरक्षित आहेत.');
+      setSaveSuccessToast(
+        appLanguage === 'mr'
+          ? 'रजिस्टर यशस्वीरित्या जतन झाले! सर्व नोंदी सुरक्षित आहेत.'
+          : 'Register saved successfully! All records secured.'
+      );
       setTimeout(() => setSaveSuccessToast(null), 3500);
     } catch (err) {
       console.error(err);
-      setSaveSuccessToast('रजिस्टर बदल जतन झाले!');
+      setSaveSuccessToast(
+        appLanguage === 'mr' ? 'रजिस्टर बदल जतन झाले!' : 'Register changes saved!'
+      );
       setTimeout(() => setSaveSuccessToast(null), 3500);
     } finally {
       setIsSaving(false);
@@ -133,7 +146,11 @@ export const RegisterView: React.FC = () => {
     e.preventDefault();
     await addNewLedgerMonth(newYear, newMonth, newLabel);
     setIsNewMonthModalOpen(false);
-    setSaveSuccessToast(`नवीन महिना (${newLabel}) रजिस्टर तयार केले गेले!`);
+    setSaveSuccessToast(
+      appLanguage === 'mr'
+        ? `नवीन महिना (${newLabel}) रजिस्टर तयार केले गेले!`
+        : `New month register (${newLabel}) created!`
+    );
     setTimeout(() => setSaveSuccessToast(null), 3500);
   };
 
@@ -142,10 +159,14 @@ export const RegisterView: React.FC = () => {
       <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 space-y-4">
         <Calendar size={40} className="mx-auto text-emerald-800" />
         <h3 className="text-base font-bold text-slate-800">
-          निवडलेल्या महिन्याचे ({selectedPeriod.monthName} {selectedPeriod.year}) रजिस्टर अद्याप तयार नाही.
+          {appLanguage === 'mr'
+            ? `निवडलेल्या महिन्याचे (${selectedPeriod.monthName} ${selectedPeriod.year}) रजिस्टर अद्याप तयार नाही.`
+            : `Register for selected period (${selectedPeriod.monthName} ${selectedPeriod.year}) is not yet created.`}
         </h3>
         <p className="text-xs text-slate-500 max-w-md mx-auto">
-          तुम्ही मागील महिन्याची शिल्लक कॅरी फॉरवर्ड करून लगेच नवीन महिन्याचे रजिस्टर सुरू करू शकता.
+          {appLanguage === 'mr'
+            ? 'तुम्ही मागील महिन्याची शिल्लक कॅरी फॉरवर्ड करून लगेच नवीन महिन्याचे रजिस्टर सुरू करू शकता.'
+            : 'You can initialize this month with the previous month closing balance carried forward.'}
         </p>
         <div className="flex flex-wrap justify-center gap-2 pt-2">
           {ledgers.length > 0 && (
@@ -157,7 +178,9 @@ export const RegisterView: React.FC = () => {
               }}
               className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl"
             >
-              उपलब्ध रजिस्टर पहा ({ledgers[0].period_label})
+              {appLanguage === 'mr'
+                ? `उपलब्ध रजिस्टर पहा (${ledgers[0].period_label})`
+                : `View Available Register (${ledgers[0].period_label})`}
             </button>
           )}
           {isAdmin && (
@@ -166,7 +189,7 @@ export const RegisterView: React.FC = () => {
               onClick={() => addNewLedgerMonth(selectedPeriod.year, selectedPeriod.month, `${selectedPeriod.monthName.slice(0, 3)} - ${String(selectedPeriod.year).slice(-2)}`)}
               className="py-2 px-4 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl"
             >
-              या महिन्याचे रजिस्टर सुरू करा
+              {appLanguage === 'mr' ? 'या महिन्याचे रजिस्टर सुरू करा' : 'Start Register For This Month'}
             </button>
           )}
         </div>
@@ -209,17 +232,17 @@ export const RegisterView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-              अधिकृत नोंदवही (Official Register)
+              {t('register.officialRegister')}
             </span>
             <span className="text-xs text-slate-500 font-medium">
-              माहे {activeLedger.period_label}
+              {t('register.forMonth')} {activeLedger.period_label}
             </span>
           </div>
           <h2 className="text-lg font-bold text-slate-900 mt-1">
-            मासिक नोंदवही रजिस्टर (Digital Register)
+            {t('register.title')}
           </h2>
           <p className="text-xs text-slate-500">
-            प्रत्येक महिन्याचे जमा, कर्ज वाटप आणि ताळेबंद हिशोब पत्रक.
+            {t('register.subtitle')}
           </p>
         </div>
 
@@ -231,7 +254,7 @@ export const RegisterView: React.FC = () => {
               onClick={handlePrevMonth}
               disabled={currentMonthIdx >= ledgers.length - 1}
               className="p-1.5 text-slate-600 hover:text-emerald-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-colors"
-              title="मागील महिना (Previous Month)"
+              title={appLanguage === 'mr' ? 'मागील महिना (Previous Month)' : 'Previous Month'}
             >
               <ChevronLeft size={15} />
             </button>
@@ -257,7 +280,7 @@ export const RegisterView: React.FC = () => {
               onClick={handleNextMonth}
               disabled={currentMonthIdx <= 0}
               className="p-1.5 text-slate-600 hover:text-emerald-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-colors"
-              title="पुढील महिना (Next Month)"
+              title={appLanguage === 'mr' ? 'पुढील महिना (Next Month)' : 'Next Month'}
             >
               <ChevronRight size={15} />
             </button>
@@ -269,17 +292,17 @@ export const RegisterView: React.FC = () => {
             onClick={handleSaveRegister}
             disabled={isSaving}
             className="py-2 px-3.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 border border-emerald-600 transition-all cursor-pointer ring-2 ring-emerald-500/20"
-            title="नोंदवही रजिस्टर सुरक्षित जतन करा (Save Register)"
+            title={t('register.saveChanges')}
           >
             {isSaving ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>जतन होत आहे...</span>
+                <span>{t('register.saving')}</span>
               </>
             ) : (
               <>
                 <Save size={14} className="text-white" />
-                <span>💾 बदल जतन करा (Save)</span>
+                <span>💾 {t('register.saveChanges')}</span>
               </>
             )}
           </button>
@@ -290,10 +313,10 @@ export const RegisterView: React.FC = () => {
               type="button"
               onClick={() => setIsNewMonthModalOpen(true)}
               className="py-2 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
-              title="नवीन महिना नोंदवही सुरू करा"
+              title={t('register.newMonth')}
             >
               <PlusCircle size={15} className="text-emerald-700" />
-              <span>नवीन महिना</span>
+              <span>{t('register.newMonth')}</span>
             </button>
           )}
 
@@ -302,10 +325,10 @@ export const RegisterView: React.FC = () => {
             type="button"
             onClick={handlePrint}
             className="py-2 px-3.5 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
-            title="A4 शीट प्रिंट किंवा पीडीएफ सेव्ह करा"
+            title={t('register.printA4')}
           >
             <Printer size={15} />
-            <span>🖨️ A4 शीट प्रिंट</span>
+            <span>🖨️ {t('register.printA4')}</span>
           </button>
         </div>
       </div>
@@ -314,48 +337,48 @@ export const RegisterView: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 print:hidden">
         <div className="p-3 bg-white rounded-xl border border-slate-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            मासिक वर्गणी जमा
+            {t('register.sharesCollected')}
           </span>
           <p className="text-sm font-bold text-slate-900 mt-0.5">
             {formatINR(totalSharesCollected)}
           </p>
           <span className="text-[10px] text-emerald-700 font-medium">
-            {paidCount} / 40 सभासद पूर्ण
+            {paidCount} / 40 {t('register.allMembersCompleted')}
           </span>
         </div>
 
         <div className="p-3 bg-white rounded-xl border border-slate-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            कर्ज हप्ते जमा
+            {t('register.installmentsCollected')}
           </span>
           <p className="text-sm font-bold text-slate-900 mt-0.5">
             {formatINR(totalInstallmentsCollected)}
           </p>
-          <span className="text-[10px] text-slate-500 font-medium">नियमित मासिक परतावा</span>
+          <span className="text-[10px] text-slate-500 font-medium">{t('register.monthlyRecovery')}</span>
         </div>
 
         <div className="p-3 bg-white rounded-xl border border-slate-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            या महिन्याचे कर्ज वाटप
+            {t('register.loansDisbursed')}
           </span>
           <p className="text-sm font-bold text-amber-700 mt-0.5">
             {formatINR(activeLedger.loan_disbursed_amount)}
           </p>
           <span className="text-[10px] text-slate-500 font-medium">
             {activeLedger.loan_disbursed_account_no
-              ? `अकौंट नं. ${activeLedger.loan_disbursed_account_no}`
-              : 'कोणतेही नाही'}
+              ? `${appLanguage === 'mr' ? 'अकौंट नं.' : 'Account #'} ${activeLedger.loan_disbursed_account_no}`
+              : t('register.none')}
           </span>
         </div>
 
         <div className="p-3 bg-white rounded-xl border border-slate-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-            पुढील महिन्यासाठी शिल्लक
+            {t('register.closingBalance')}
           </span>
           <p className="text-sm font-bold text-emerald-800 mt-0.5">
             {formatINR(closingBalance)}
           </p>
-          <span className="text-[10px] text-slate-500 font-medium">पुढील महिन्यात कॅरी फॉरवर्ड</span>
+          <span className="text-[10px] text-slate-500 font-medium">{t('register.carryForwardSub')}</span>
         </div>
       </div>
 
@@ -367,15 +390,17 @@ export const RegisterView: React.FC = () => {
         {/* Printable Official Header */}
         <div className="text-center pb-3 border-b-2 border-slate-800 mb-3">
           <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-wide font-serif">
-            {society.name}
+            {getLocalizedSocietyName(society, appLanguage)}
           </h1>
           <p className="text-xs sm:text-sm font-semibold text-slate-700">
-            मासिक वर्गणी व बिनव्याजी कर्ज नोंदवही पत्रक - माहे {activeLedger.period_label}
+            {appLanguage === 'mr'
+              ? `मासिक वर्गणी व बिनव्याजी कर्ज नोंदवही पत्रक - माहे ${activeLedger.period_label}`
+              : `Monthly Share & Interest-Free Loan Register Sheet - For ${activeLedger.period_label}`}
           </p>
           <div className="flex justify-between items-center text-[10px] sm:text-xs text-slate-600 mt-1 px-1">
-            <span>सोलापूर, महाराष्ट्र</span>
-            <span>मासिक वर्गणी दर: ₹300/- दरमहा</span>
-            <span>तारीख: {new Date().toLocaleDateString('mr-IN')}</span>
+            <span>{appLanguage === 'mr' ? 'सोलापूर, महाराष्ट्र' : 'Solapur, Maharashtra'}</span>
+            <span>{appLanguage === 'mr' ? 'मासिक वर्गणी दर: ₹300/- दरमहा' : 'Monthly Share Rate: ₹300 / mo'}</span>
+            <span>{appLanguage === 'mr' ? `तारीख: ${new Date().toLocaleDateString('mr-IN')}` : `Date: ${new Date().toLocaleDateString('en-IN')}`}</span>
           </div>
         </div>
 
@@ -384,17 +409,17 @@ export const RegisterView: React.FC = () => {
           <table className="w-full text-left border-collapse text-[11px] print:text-[8.5pt]">
             <thead>
               <tr className="bg-slate-100 text-slate-800 border-y-2 border-slate-800 font-bold uppercase text-[9px] print:text-[8pt] tracking-wider">
-                <th className="py-1.5 px-1.5 text-center w-8 border border-slate-300">अ.नं.</th>
-                <th className="py-1.5 px-2 border border-slate-300">सभासदाचे नाव (Member Name)</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300">मासिक वर्गणी</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300">एकूण शेअर्स</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300">कर्ज मंजूर</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300">कर्जाचा हप्ता</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300">येणे कर्ज बाकी</th>
-                <th className="py-1.5 px-1 text-center border border-slate-300">दंड</th>
-                <th className="py-1.5 px-2 text-right border border-slate-300 font-extrabold">एकूण रुपये</th>
-                <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">स्थिती</th>
-                {isAdmin && <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">कृती</th>}
+                <th className="py-1.5 px-1.5 text-center w-8 border border-slate-300">{t('register.srNo')}</th>
+                <th className="py-1.5 px-2 border border-slate-300">{t('register.memberName')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">{t('register.monthlyShareCol')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">{t('register.totalSharesCol')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">{t('register.loanApprovedCol')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">{t('register.loanInstallmentCol')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300">{t('register.remainingLoanCol')}</th>
+                <th className="py-1.5 px-1 text-center border border-slate-300">{t('register.fineCol')}</th>
+                <th className="py-1.5 px-2 text-right border border-slate-300 font-extrabold">{t('register.totalRsCol')}</th>
+                <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">{t('register.statusCol')}</th>
+                {isAdmin && <th className="py-1.5 px-1.5 text-center border border-slate-300 print:hidden">{t('register.actionCol')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -407,16 +432,27 @@ export const RegisterView: React.FC = () => {
                     className={`border-b border-slate-200 transition-colors ${
                       isAdmin ? 'cursor-pointer hover:bg-emerald-50/70 group' : 'hover:bg-slate-50'
                     } ${entry.account_no % 2 === 0 ? 'bg-slate-50/40' : 'bg-white'}`}
-                    title={isAdmin ? `क्लिक करून #${entry.account_no} ${entry.name_mr} मधील बदल संपादित करा` : undefined}
+                    title={isAdmin ? `Edit #${entry.account_no}` : undefined}
                   >
                     <td className="py-1 px-1.5 text-center font-bold text-slate-800 border border-slate-200">
                       {entry.account_no}
                     </td>
                     <td className="py-1 px-2 border border-slate-200 font-medium text-slate-900 whitespace-nowrap">
-                      <span>{entry.name_mr}</span>
-                      <span className="text-[10px] text-slate-400 ml-1.5 font-normal">
-                        ({entry.name_en})
-                      </span>
+                      {appLanguage === 'mr' ? (
+                        <>
+                          <span>{entry.name_mr}</span>
+                          <span className="text-[10px] text-slate-400 ml-1.5 font-normal">
+                            ({entry.name_en})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{entry.name_en}</span>
+                          <span className="text-[10px] text-slate-400 ml-1.5 font-normal">
+                            ({entry.name_mr})
+                          </span>
+                        </>
+                      )}
                     </td>
                     <td className="py-1 px-2 text-right font-medium text-slate-700 border border-slate-200">
                       {entry.monthly_share.toLocaleString('en-IN')}
@@ -449,14 +485,14 @@ export const RegisterView: React.FC = () => {
                             e.stopPropagation();
                             toggleLedgerEntryPaid(entry.account_no);
                           }}
-                          title={entry.is_paid ? 'भरणा पूर्ण (टॅप करून बदला)' : 'बाकी (टॅप करून जमा करा)'}
+                          title={entry.is_paid ? `${t('register.paid')} - Click to toggle` : `${t('register.unpaid')} - Click to mark paid`}
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
                             entry.is_paid
                               ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                               : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                           }`}
                         >
-                          {entry.is_paid ? 'जमा' : 'बाकी'}
+                          {entry.is_paid ? t('register.paid') : t('register.unpaid')}
                         </button>
                       ) : (
                         <span
@@ -464,7 +500,7 @@ export const RegisterView: React.FC = () => {
                             entry.is_paid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {entry.is_paid ? 'जमा' : 'बाकी'}
+                          {entry.is_paid ? t('register.paid') : t('register.unpaid')}
                         </span>
                       )}
                     </td>
@@ -479,7 +515,7 @@ export const RegisterView: React.FC = () => {
                             handleOpenEdit(entry);
                           }}
                           className="p-1 text-slate-500 hover:text-emerald-800 hover:bg-slate-100 rounded-md transition-colors"
-                          title="या नोंदीत बदल करा"
+                          title={t('register.editTitle')}
                         >
                           <Edit2 size={13} />
                         </button>
@@ -494,7 +530,7 @@ export const RegisterView: React.FC = () => {
             <tfoot>
               <tr className="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-b-2 border-slate-800">
                 <td colSpan={2} className="py-2 px-2 text-center border border-slate-300">
-                  एकूण बेरीज (TOTAL)
+                  {t('register.totalRow')}
                 </td>
                 <td className="py-2 px-2 text-right border border-slate-300">
                   ₹{totalSharesCollected.toLocaleString('en-IN')}
@@ -529,37 +565,41 @@ export const RegisterView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs print:text-[8pt]">
             <div className="p-3 bg-slate-50 border border-slate-300 rounded-xl space-y-1">
               <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1 mb-1.5 uppercase tracking-wide">
-                मासिक जमा व रोख ताळेबंद (Cash Reconciliation)
+                {t('register.cashReconciliation')}
               </h4>
               <div className="flex justify-between py-0.5">
-                <span className="text-slate-600">मासिक शेअर्स जमा (40 सभासद × ₹300):</span>
+                <span className="text-slate-600">
+                  {appLanguage === 'mr' ? 'मासिक शेअर्स जमा (40 सभासद × ₹300):' : 'Monthly Shares (40 Members × ₹300):'}
+                </span>
                 <span className="font-semibold text-slate-900">₹{totalSharesCollected.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-0.5">
-                <span className="text-slate-600">कर्ज हप्ते जमा:</span>
+                <span className="text-slate-600">
+                  {appLanguage === 'mr' ? 'कर्ज हप्ते जमा:' : 'Loan Installments Collected:'}
+                </span>
                 <span className="font-semibold text-slate-900">₹{totalInstallmentsCollected.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-0.5 font-bold border-t border-slate-200 pt-1">
-                <span>एकूण जमा (Total Collection):</span>
+                <span>{t('register.totalCollection')}</span>
                 <span className="text-emerald-800">₹{totalGrossCollected.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-0.5">
-                <span className="text-slate-600">मागील महिना शिल्लक (Carried Forward):</span>
+                <span className="text-slate-600">{t('register.prevMonthBal')}</span>
                 <span className="font-semibold text-slate-900">₹{activeLedger.previous_balance.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-0.5 font-bold text-emerald-900 border-t border-slate-300 pt-1">
-                <span>एकूण उपलब्ध शिल्लक (Total Available Cash):</span>
+                <span>{t('register.grossCashAvailable')}</span>
                 <span>₹{totalCashAvailable.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-0.5 text-amber-900 font-semibold">
                 <span>
-                  नवीन कर्ज वाटप{' '}
-                  {activeLedger.loan_disbursed_account_no ? `(अकौंट #${activeLedger.loan_disbursed_account_no})` : ''}:
+                  {t('register.lessLoanDisbursed')}{' '}
+                  {activeLedger.loan_disbursed_account_no ? `(#${activeLedger.loan_disbursed_account_no})` : ''}:
                 </span>
                 <span>- ₹{activeLedger.loan_disbursed_amount.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-1 font-extrabold text-sm border-t-2 border-slate-800 text-slate-900 pt-1">
-                <span>पुढील महिन्यासाठी शिल्लक (Current Balance Transfer):</span>
+                <span>{t('register.netClosingBal')}</span>
                 <span>₹{closingBalance.toLocaleString('en-IN')}</span>
               </div>
             </div>
@@ -568,22 +608,24 @@ export const RegisterView: React.FC = () => {
             <div className="flex flex-col justify-between p-3 border border-slate-300 rounded-xl bg-slate-50/50">
               <div>
                 <h4 className="font-bold text-slate-900 text-xs border-b border-slate-200 pb-1 mb-2 uppercase tracking-wide">
-                  प्रमाणपत्र व स्वाक्षरी (Certifications)
+                  {t('register.signatures')}
                 </h4>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  माहे {activeLedger.period_label} चे वरील सर्व 40 सभासदांचे शेअर्स, कर्ज हप्ते व ताळेबंद हिशोब पूर्णपणे तपासले असून योग्य व बरोबर असल्याचे प्रमाणित करण्यात येत आहे.
+                  {appLanguage === 'mr'
+                    ? `माहे ${activeLedger.period_label} चे वरील सर्व 40 सभासदांचे शेअर्स, कर्ज हप्ते व ताळेबंद हिशोब पूर्णपणे तपासले असून योग्य व बरोबर असल्याचे प्रमाणित करण्यात येत आहे.`
+                    : `All 40 member shares, loan installments, and monthly balance sheet accounts for ${activeLedger.period_label} have been thoroughly audited and certified as accurate.`}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-6 mt-4 border-t border-slate-300 text-center font-bold text-slate-800">
                 <div>
                   <div className="h-8 border-b border-dashed border-slate-400"></div>
-                  <span className="text-[11px] block mt-1">सेक्रेटरी / व्यवस्थापक</span>
+                  <span className="text-[11px] block mt-1">{t('register.secretarySign')}</span>
                   <span className="text-[9px] text-slate-500 font-normal">Secretary / Manager</span>
                 </div>
                 <div>
                   <div className="h-8 border-b border-dashed border-slate-400"></div>
-                  <span className="text-[11px] block mt-1">अध्यक्ष / खजिनदार</span>
+                  <span className="text-[11px] block mt-1">{t('register.presidentSign')}</span>
                   <span className="text-[9px] text-slate-500 font-normal">President / Treasurer</span>
                 </div>
               </div>
@@ -598,7 +640,7 @@ export const RegisterView: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-sm font-bold text-slate-900">
-                नोंद संपादन: #{editingEntry.account_no} {editingEntry.name_mr}
+                {t('register.editTitle')}: #{editingEntry.account_no} {appLanguage === 'mr' ? editingEntry.name_mr : editingEntry.name_en}
               </h3>
               <button
                 type="button"
@@ -613,7 +655,7 @@ export const RegisterView: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    मासिक वर्गणी (₹)
+                    {t('register.monthlyShareCol')} (₹)
                   </label>
                   <input
                     type="number"
@@ -624,7 +666,7 @@ export const RegisterView: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    कर्जाचा हप्ता (₹)
+                    {t('register.loanInstallmentCol')} (₹)
                   </label>
                   <input
                     type="number"
@@ -638,7 +680,7 @@ export const RegisterView: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    येणे कर्ज बाकी (₹)
+                    {t('register.remainingLoanCol')} (₹)
                   </label>
                   <input
                     type="number"
@@ -649,7 +691,7 @@ export const RegisterView: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    दंड / लेट फी (₹)
+                    {t('register.fineCol')} (₹)
                   </label>
                   <input
                     type="number"
@@ -662,13 +704,13 @@ export const RegisterView: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  नवीन कर्ज मंजूर (या महिन्यात वाटप)
+                  {t('register.loanApprovedCol')} (₹)
                 </label>
                 <input
                   type="number"
                   value={editLoanApproved}
                   onChange={(e) => setEditLoanApproved(e.target.value)}
-                  placeholder="उदा. 180000"
+                  placeholder="e.g. 180000"
                   className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
                 />
               </div>
@@ -676,8 +718,10 @@ export const RegisterView: React.FC = () => {
               {/* Payment Status Toggle inside Edit Modal */}
               <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
                 <div>
-                  <span className="text-xs font-bold text-slate-800 block">भरणा स्थिती (Payment Status)</span>
-                  <span className="text-[10px] text-slate-500">या महिन्याची वर्गणी व हप्ता जमा आहे का?</span>
+                  <span className="text-xs font-bold text-slate-800 block">{t('register.paymentStatus')}</span>
+                  <span className="text-[10px] text-slate-500">
+                    {appLanguage === 'mr' ? 'या महिन्याची वर्गणी व हप्ता जमा आहे का?' : 'Is share and installment paid for this month?'}
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -688,7 +732,7 @@ export const RegisterView: React.FC = () => {
                       : 'bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300'
                   }`}
                 >
-                  {editIsPaid ? '✅ जमा (Paid)' : '⏳ बाकी (Unpaid)'}
+                  {editIsPaid ? `✅ ${t('register.paid')}` : `⏳ ${t('register.unpaid')}`}
                 </button>
               </div>
 
@@ -698,13 +742,13 @@ export const RegisterView: React.FC = () => {
                   onClick={() => setEditingEntry(null)}
                   className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
                 >
-                  रद्द करा
+                  {t('register.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-sm"
                 >
-                  बदल जतन करा
+                  {t('register.saveEntry')}
                 </button>
               </div>
             </form>
@@ -717,7 +761,9 @@ export const RegisterView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-bold text-slate-900">नवीन महिना रजिस्टर तयार करा</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                {appLanguage === 'mr' ? 'नवीन महिना रजिस्टर तयार करा' : 'Create New Month Register'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsNewMonthModalOpen(false)}
@@ -729,7 +775,9 @@ export const RegisterView: React.FC = () => {
 
             <form onSubmit={handleCreateNewMonth} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">वर्ष (Year)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {appLanguage === 'mr' ? 'वर्ष (Year)' : 'Year'}
+                </label>
                 <input
                   type="number"
                   value={newYear}
@@ -739,7 +787,9 @@ export const RegisterView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">महिना (Month 1-12)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {appLanguage === 'mr' ? 'महिना (Month 1-12)' : 'Month (1-12)'}
+                </label>
                 <input
                   type="number"
                   min={1}
@@ -751,18 +801,22 @@ export const RegisterView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">नाव / लेबल</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {appLanguage === 'mr' ? 'नाव / लेबल' : 'Name / Label'}
+                </label>
                 <input
                   type="text"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="उदा. Nov - 24"
+                  placeholder="e.g. Nov - 24"
                   className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 font-medium"
                 />
               </div>
 
               <div className="p-2.5 bg-emerald-50 text-emerald-800 text-[11px] rounded-xl border border-emerald-200">
-                मागील महिन्याची उर्वरित शिल्लक (₹{closingBalance.toLocaleString('en-IN')}) नवीन महिन्यात स्वयंचलितरित्या सुरुवातीची शिल्लक म्हणून ट्रान्सफर केली जाईल.
+                {appLanguage === 'mr'
+                  ? `मागील महिन्याची उर्वरित शिल्लक (₹${closingBalance.toLocaleString('en-IN')}) नवीन महिन्यात स्वयंचलितरित्या सुरुवातीची शिल्लक म्हणून ट्रान्सफर केली जाईल.`
+                  : `Closing balance (₹${closingBalance.toLocaleString('en-IN')}) from previous month will automatically transfer as the starting balance.`}
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -771,13 +825,13 @@ export const RegisterView: React.FC = () => {
                   onClick={() => setIsNewMonthModalOpen(false)}
                   className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
                 >
-                  रद्द करा
+                  {t('register.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold"
                 >
-                  तयार करा
+                  {appLanguage === 'mr' ? 'तयार करा' : 'Create Month'}
                 </button>
               </div>
             </form>
@@ -787,3 +841,4 @@ export const RegisterView: React.FC = () => {
     </div>
   );
 };
+
