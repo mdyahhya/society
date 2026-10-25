@@ -20,12 +20,10 @@ export const PwaInstallModal: React.FC = () => {
     >
       <div className="space-y-4">
         <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-          <div className="w-12 h-12 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-lg shrink-0">
-            अ
-          </div>
+          <img src="/icon.svg" alt="Al-Badr Society" className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-xs" />
           <div>
             <h4 className="text-xs font-bold text-slate-900">
-              अल-बदर बिलासुदी को.ऑप. सोसायटी
+              Al-Badr Society
             </h4>
             <p className="text-[11px] text-emerald-800 font-medium">
               मोबाईल होम स्क्रीनवर ॲप प्रमाणे वापरा, इंटरनेटशिवायही उपलब्ध.

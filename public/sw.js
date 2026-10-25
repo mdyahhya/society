@@ -1,5 +1,5 @@
-// Service Worker for Al-Badr Bilasudi Co-Op Society PWA
-const CACHE_NAME = 'albadr-society-cache-v2';
+// Service Worker for Al-Badr Society PWA
+const CACHE_NAME = 'albadr-society-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event) => {
 // Web Push Notification Handler
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'Al-Badr Bilasudi Society Notice',
+    title: 'Al-Badr Society Notice',
     body: 'New notification received from society.',
     url: '/'
   };

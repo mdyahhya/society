@@ -79,6 +79,8 @@ export default async function handler(req: any, res: any) {
     title,
     body,
     url,
+    icon: '/icon-192.png',
+    badge: '/icon.svg',
     timestamp: Date.now(),
   });
 
